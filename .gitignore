@@ -4,3 +4,6 @@ seed.md
 wallet.dat
 wallet.dat.bkp
 config.json
+yarn.lock
+package-lock.json
+dist
