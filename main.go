@@ -29,12 +29,10 @@ func main() {
 		// cleanup webview
 		w.Destroy()
 		// cleanup http server
-		if server != nil {
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-			if err := server.Shutdown(ctx); err != nil {
-				fmt.Printf("error shutting down server: %s", err.Error())
-			}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			fmt.Printf("error shutting down server: %s", err.Error())
 		}
 	}()
 
