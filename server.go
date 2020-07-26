@@ -8,15 +8,18 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/rs/cors"
 )
 
-func srv(port string) *http.Server {
-	r := initChi()
+func srv(port string, isDev bool) *http.Server {
+	r := initChi(isDev)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode("INDEX")
-	})
+	if !isDev {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode("INDEX")
+		})
+	}
 
 	server := &http.Server{Addr: ":" + port, Handler: r}
 	go func() {
@@ -28,11 +31,22 @@ func srv(port string) *http.Server {
 	return server
 }
 
-func initChi() *chi.Mux {
+func initChi(isDev bool) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+	if isDev {
+		cors := cors.New(cors.Options{
+			AllowedOrigins:   []string{"*"},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-User", "authorization"},
+			AllowCredentials: true,
+			MaxAge:           300, // Maximum value not ignored by any of major browsers
+			//Debug:            true,
+		})
+		r.Use(cors.Handler)
+	}
 	return r
 }

@@ -15,12 +15,12 @@ func main() {
 	var server *http.Server
 	port := "3579"
 
-	isDev := os.Getenv("DEV") // export DEV=true
-	if isDev == "true" {
+	isDev := os.Getenv("DEV") == "true" // export DEV=true
+	if isDev {
 		port = "8000" // webpack dev server
-	} else {
-		server = srv(port) // prod server
 	}
+
+	server = srv(port, isDev)
 
 	debug := true
 	w := webview.New(debug)
