@@ -4,8 +4,12 @@ use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, ToString};
 use yew::format::Json;
 use yew::prelude::*;
-use yew::services::storage::{Area, StorageService};
-use yew::services::fetch::FetchTask;
+use yew::services::{
+    storage::{Area, StorageService},
+    fetch::{FetchTask, FetchService, Request, Response},
+};
+use yew::format::{Text, Nothing};
+use anyhow::Error;
 
 use crate::components::{logo::Logo, grid::Grid, line::Line};
 
@@ -25,6 +29,7 @@ pub struct State {
     initted: bool,
     shimmer_url: String,
     url_input_value: String,
+    fetching: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,7 +44,14 @@ pub enum Msg {
     ShowIcon,
     UpdateURL(String),
     EnterURL,
+    FetchReady(Result<DataFromAPI, Error>),
     Nope,
+}
+
+/// have to correspond the data layout from that file.
+#[derive(Deserialize, Debug)]
+pub struct DataFromAPI {
+    value: u32,
 }
 
 impl Component for App {
@@ -61,6 +73,7 @@ impl Component for App {
             initted: false,
             shimmer_url: "".to_string(),
             url_input_value: "".to_string(),
+            fetching: false,
         };
         App {
             link,
@@ -92,9 +105,18 @@ impl Component for App {
                 info!("Enter!");
                 self.state.shimmer_url = self.state.url_input_value.clone();
                 self.state.url_input_value = "".to_string();
+                self.state.fetching = true;
+                self.fetch_json(
+                    self.state.shimmer_url.clone() + "/check"
+                );   
             }
             Msg::ShowIcon => {
                 self.state.initted = true;
+            }
+            Msg::FetchReady(response) => {
+                self.state.fetching = false;
+                info!("FETCH DON!")
+                // self.data = response.map(|data| data.value).ok();
             }
             Msg::Nope => {}
         }
@@ -159,6 +181,22 @@ impl App {
                 </button>
             </div>
         }
+    }
+    fn fetch_json(&mut self, path: String) {
+        let callback = self.link.callback(
+            move |response: Response<Json<Result<DataFromAPI, Error>>>| {
+                let (meta, Json(data)) = response.into_parts();
+                if meta.status.is_success() {
+                    Msg::FetchReady(data)
+                } else {
+                    info!("HEY ETF!!!!");
+                    Msg::Nope // FIXME: Handle this error accordingly.
+                }
+            },
+        );
+        let request = Request::get(path).body(Nothing).unwrap();
+        let task = FetchService::fetch(request, callback).unwrap();
+        self.fetcher = Some(task);
     }
 }
 
