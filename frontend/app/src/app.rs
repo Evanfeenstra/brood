@@ -1,6 +1,11 @@
-use log::*;
+use log::{info,warn};
 use serde_derive::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{
+    json,
+    value::Value,
+    error::Error,
+    from_str,
+};
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, ToString};
 use yew::format::Json;
@@ -10,7 +15,7 @@ use yew::services::{
     fetch::{FetchTask, FetchService, Request, Response},
 };
 use yew::format::{Text, Nothing};
-use anyhow::Error;
+use anyhow::{anyhow};
 
 use crate::components::{logo::Logo, grid::Grid, gear::Gear};
 
@@ -33,6 +38,7 @@ pub struct State {
     fetching: bool,
     synced: bool,
     version: String,
+    seed: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -47,15 +53,20 @@ pub enum Msg {
     ShowIcon,
     UpdateURL(String),
     EnterURL,
-    FetchReady(&'static str, Result<DataFromAPI, Error>),
+    FetchReady(&'static str, String),
+    FetchErr(anyhow::Error),
     Nope,
 }
 
-/// have to correspond the data layout from that file.
+/// have to correspond the data layout from that endpoint.
 #[derive(Deserialize, Debug)]
-pub struct DataFromAPI {
+pub struct CheckRes {
     version: String,
     synced: bool,
+}
+#[derive(Deserialize, Debug)]
+pub struct CreateRes {
+    seed: String,
 }
 
 impl Component for App {
@@ -72,6 +83,7 @@ impl Component for App {
             fetching: false,
             synced: false,
             version: "".to_string(),
+            seed: "".to_string(),
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -87,7 +99,9 @@ impl Component for App {
             fetcher: None,
         };
         if app.state.shimmer_url.len()>0 {
-            app.fetch("check");
+            app.fetch_json("check", json!({
+                "url": app.state.shimmer_url
+            }));
         }
         app
     }
@@ -110,16 +124,21 @@ impl Component for App {
                 self.state.shimmer_url = val;
                 self.state.url_input_value = "".to_string();
                 self.state.fetching = true;
-                self.fetch("check");   
+                self.fetch_json("check", json!({
+                    "url": self.state.shimmer_url
+                }));   
             }
             Msg::ShowIcon => {
                 self.state.initted = true;
             }
-            Msg::FetchReady(path, response) => {
+            Msg::FetchReady(path, data) => {
                 self.state.fetching = false;
-                self.parse_json_response(path, response);
+                self.parse_json_response(path, data);
                 info!("shimmer version: {:?}",self.state.version);
                 info!("shimmer synced: {:?}",self.state.synced)
+            }
+            Msg::FetchErr(err) => {
+                warn!("{:?}",err)
             }
             Msg::Mint => {
                 let coin = Coin {
@@ -194,33 +213,45 @@ impl App {
             </div>
         }
     }
-    fn fetch(&mut self, path:&'static str) {
+    fn fetch_json(&mut self, path:&'static str, body: Value) {
         let callback = self.link.callback(
-            move |response: Response<Json<Result<DataFromAPI, Error>>>| {
-                let (meta, Json(data)) = response.into_parts();
+            move |response: Response<Text>| {
+                let (meta, data) = response.into_parts();
                 if meta.status.is_success() {
-                    Msg::FetchReady(path, data)
+                    match data {
+                        Ok(d)=> Msg::FetchReady(path, d),
+                        Err(e)=> Msg::FetchErr(e),
+                    }
                 } else {
-                    info!("Error Bad Request");
-                    Msg::Nope // FIXME: Handle this error accordingly.
+                    Msg::FetchErr(anyhow!("cant fetch"))
                 }
             },
         );
-        match Request::post("http://localhost:3579/".to_string()+&path).body(Json(&json!({
-            "url": self.state.shimmer_url
-        }))) {
+        match Request::post("http://localhost:3579/".to_string()+&path).body(Json(&body)) {
             Ok(req) => {
                 let res = FetchService::fetch(req, callback);
                 self.fetcher = Some(res.unwrap());
             },
-            Err(_e) => info!("cant parse"), // handle error here
+            Err(e) => { Msg::FetchErr(anyhow::Error::new(e)); }
         };
     }
-    fn parse_json_response(&mut self, path:&'static str, response:Result<DataFromAPI,Error>){
-        response.map(|data| {
-            self.state.synced = data.synced;
-            self.state.version = data.version;
-        }).ok();
+    fn parse_json_response(&mut self, path:&'static str, r:String){
+        match path {
+            "check"=> {
+                let json: Result<CheckRes,Error> = from_str(r.as_str());
+                json.map(|data| {
+                    self.state.synced = data.synced;
+                    self.state.version = data.version;
+                }).ok();
+            }
+            "create"=>{
+                let json: Result<CreateRes,Error> = from_str(r.as_str());
+                json.map(|data| {
+                    self.state.seed = data.seed;
+                }).ok();
+            }
+            &_=>()
+        }
     }
 }
 
