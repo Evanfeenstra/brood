@@ -12,7 +12,7 @@ use yew::services::{
 use yew::format::{Text, Nothing};
 use anyhow::Error;
 
-use crate::components::{logo::Logo, grid::Grid, line::Line};
+use crate::components::{logo::Logo, grid::Grid, gear::Gear};
 
 const KEY: &str = "yew.brood.self.shimmer_url";
 
@@ -47,14 +47,15 @@ pub enum Msg {
     ShowIcon,
     UpdateURL(String),
     EnterURL,
-    FetchReady(Result<DataFromAPI, Error>),
+    FetchReady(&'static str, Result<DataFromAPI, Error>),
     Nope,
 }
 
 /// have to correspond the data layout from that file.
 #[derive(Deserialize, Debug)]
 pub struct DataFromAPI {
-    value: u32,
+    version: String,
+    synced: bool,
 }
 
 impl Component for App {
@@ -114,10 +115,11 @@ impl Component for App {
             Msg::ShowIcon => {
                 self.state.initted = true;
             }
-            Msg::FetchReady(response) => {
+            Msg::FetchReady(path, response) => {
                 self.state.fetching = false;
-                info!("FETCH DON!")
-                // self.data = response.map(|data| data.value).ok();
+                self.parse_json_response(path, response);
+                info!("shimmer version: {:?}",self.state.version);
+                info!("shimmer synced: {:?}",self.state.synced)
             }
             Msg::Mint => {
                 let coin = Coin {
@@ -192,12 +194,12 @@ impl App {
             </div>
         }
     }
-    fn fetch(&mut self, path: &str) {
+    fn fetch(&mut self, path:&'static str) {
         let callback = self.link.callback(
             move |response: Response<Json<Result<DataFromAPI, Error>>>| {
                 let (meta, Json(data)) = response.into_parts();
                 if meta.status.is_success() {
-                    Msg::FetchReady(data)
+                    Msg::FetchReady(path, data)
                 } else {
                     info!("Error Bad Request");
                     Msg::Nope // FIXME: Handle this error accordingly.
@@ -211,8 +213,14 @@ impl App {
                 let res = FetchService::fetch(req, callback);
                 self.fetcher = Some(res.unwrap());
             },
-            Err(_e) => () // handle error here
+            Err(_e) => info!("cant parse"), // handle error here
         };
+    }
+    fn parse_json_response(&mut self, path:&'static str, response:Result<DataFromAPI,Error>){
+        response.map(|data| {
+            self.state.synced = data.synced;
+            self.state.version = data.version;
+        }).ok();
     }
 }
 
