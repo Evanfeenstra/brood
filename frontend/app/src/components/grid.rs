@@ -155,7 +155,7 @@ impl Grid {
         self.state.l = self.state.l + self.speed;
         if self.state.l > self.state.total + 48 {
             self.props.done.emit(());
-            return
+            return // stop the loop
         }
         let render_frame = self.link.callback(Msg::Render);
         let handle = RenderService::request_animation_frame(render_frame);
@@ -200,14 +200,6 @@ impl Grid {
         let xlen = x1 - x2;
         let ylen = y1 - y2;
         (xlen.abs() - ylen.abs()).abs()
-    }
-    fn _view_final_line(&self, final_y2:i16) -> Html {
-        html! {
-            <Line //class=if go_final>0 { "show" } else { "hide" }
-                x1=280 y1=50
-                x2=280 y2=final_y2 as u16
-            />
-        }
     }
 }
 

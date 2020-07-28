@@ -29,9 +29,9 @@ func srv(port string, isDev bool) *http.Server {
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get("/check", checkWallet)
-		r.Get("/create", createWallet)
-		r.Get("/balance", getBalance)
+		r.Post("/check", checkWallet)
+		r.Post("/create", createWallet)
+		r.Post("/balance", getBalance)
 	})
 
 	server := &http.Server{Addr: ":" + port, Handler: r}
@@ -52,12 +52,12 @@ func initChi(isDev bool) *chi.Mux {
 	r.Use(middleware.Timeout(60 * time.Second))
 	if isDev { // dev comes from port 8000
 		cors := cors.New(cors.Options{
-			AllowedOrigins:   []string{"*"},
+			AllowedOrigins:   []string{"http://localhost:8000"},
 			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-User", "authorization"},
 			AllowCredentials: true,
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
-			//Debug:            true,
+			Debug:            true,
 		})
 		r.Use(cors.Handler)
 	}

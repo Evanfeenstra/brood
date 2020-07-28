@@ -1,5 +1,6 @@
 use log::*;
 use serde_derive::{Deserialize, Serialize};
+use serde_json::json;
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, ToString};
 use yew::format::Json;
@@ -13,7 +14,7 @@ use anyhow::Error;
 
 use crate::components::{logo::Logo, grid::Grid, line::Line};
 
-const KEY: &str = "yew.brood.self";
+const KEY: &str = "yew.brood.self.shimmer_url";
 
 pub struct App {
     link: ComponentLink<Self>,
@@ -30,6 +31,8 @@ pub struct State {
     shimmer_url: String,
     url_input_value: String,
     fetching: bool,
+    synced: bool,
+    version: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -60,27 +63,32 @@ impl Component for App {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let storage = StorageService::new(Area::Local).unwrap();
-        let persisted_url:String = {
-            if let Json(Ok(persisted)) = storage.restore(KEY) {
-                persisted
-            } else {
-                "".to_string()
-            }
-        };
         let state = State {
             coins: Vec::new(),
             value: "".to_string(),
             initted: false,
-            shimmer_url: persisted_url,
             url_input_value: "".to_string(),
             fetching: false,
+            synced: false,
+            version: "".to_string(),
+            shimmer_url: {
+                if let Json(Ok(persisted)) = storage.restore(KEY) {
+                    persisted
+                } else {
+                    "".to_string()
+                }
+            }
         };
-        App {
+        let mut app = App {
             link,
             storage,
             state,
             fetcher: None,
+        };
+        if app.state.shimmer_url.len()>0 {
+            app.fetch("check");
         }
+        app
     }
 
     fn change(&mut self, _props: Self::Properties) -> ShouldRender {
@@ -89,26 +97,19 @@ impl Component for App {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::Mint => {
-                let coin = Coin {
-                    description: self.state.value.clone(),
-                    completed: false,
-                    editing: false,
-                };
-                self.state.coins.push(coin);
-                self.state.value = "".to_string();
-            }
             Msg::UpdateURL(val) => {
                 self.state.url_input_value = val;
             }
             Msg::EnterURL => {
-                info!("Enter!");
-                self.state.shimmer_url = self.state.url_input_value.clone();
+                let mut val = self.state.url_input_value.clone();
+                if val.chars().last()==Some('/') {
+                    val.pop();
+                }
+                info!("url: {:?}",val);
+                self.state.shimmer_url = val;
                 self.state.url_input_value = "".to_string();
                 self.state.fetching = true;
-                self.fetch_json(
-                    self.state.shimmer_url.clone() + "/check"
-                );   
+                self.fetch("check");   
             }
             Msg::ShowIcon => {
                 self.state.initted = true;
@@ -117,6 +118,15 @@ impl Component for App {
                 self.state.fetching = false;
                 info!("FETCH DON!")
                 // self.data = response.map(|data| data.value).ok();
+            }
+            Msg::Mint => {
+                let coin = Coin {
+                    description: self.state.value.clone(),
+                    completed: false,
+                    editing: false,
+                };
+                self.state.coins.push(coin);
+                self.state.value = "".to_string();
             }
             Msg::Nope => {}
         }
@@ -182,7 +192,7 @@ impl App {
             </div>
         }
     }
-    fn fetch_json(&mut self, path: String) {
+    fn fetch(&mut self, path: &str) {
         let callback = self.link.callback(
             move |response: Response<Json<Result<DataFromAPI, Error>>>| {
                 let (meta, Json(data)) = response.into_parts();
@@ -194,12 +204,14 @@ impl App {
                 }
             },
         );
-        match Request::get(path).body(Nothing) {
+        match Request::post("http://localhost:3579/".to_string()+&path).body(Json(&json!({
+            "url": self.state.shimmer_url
+        }))) {
             Ok(req) => {
                 let res = FetchService::fetch(req, callback);
                 self.fetcher = Some(res.unwrap());
             },
-            Err(e) => () // handle error here
+            Err(_e) => () // handle error here
         };
     }
 }
