@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -12,15 +11,10 @@ import (
 
 func main() {
 
-	var server *http.Server
 	port := "3579"
 
 	isDev := os.Getenv("DEV") == "true" // export DEV=true
-	if isDev {
-		port = "8000" // webpack dev server
-	}
-
-	server = srv(port, isDev)
+	server := srv(port, isDev)
 
 	debug := true
 	w := webview.New(debug)
@@ -36,9 +30,14 @@ func main() {
 		}
 	}()
 
-	w.SetTitle("Minimal webview example")
+	w.SetTitle("Brood Wallet")
 	w.SetSize(999, 650, webview.HintNone)
-	w.Navigate("http://localhost:" + port)
+
+	appPort := port
+	if isDev {
+		appPort = "8000"
+	}
+	w.Navigate("http://localhost:" + appPort)
 	w.Run()
 }
 

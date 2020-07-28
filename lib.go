@@ -6,17 +6,15 @@ import (
 	"os"
 	"unsafe"
 
+	"github.com/mr-tron/base58"
+
 	"github.com/iotaledger/goshimmer/client/wallet"
 	walletseed "github.com/iotaledger/goshimmer/client/wallet/packages/seed"
+
 	"github.com/iotaledger/hive.go/bitmask"
 	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/marshalutil"
-	"github.com/mr-tron/base58"
 )
-
-func printBanner() {
-	fmt.Println("IOTA Pollen CLI-Wallet 0.1")
-}
 
 func loadWallet() *wallet.Wallet {
 	seed, lastAddressIndex, spentAddresses, assetRegistry, err := importWalletStateFile("wallet.dat")

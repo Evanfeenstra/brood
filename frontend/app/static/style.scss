@@ -25,6 +25,8 @@ body {
   height: calc(100% - 1px);
   display: flex;
   flex: 1;
+  position: relative;
+  z-index: 100;
 }
 section.sidebar{
   height:100%;
@@ -45,6 +47,14 @@ section.sidebar{
   transition: all 0.2s;
   transform: translate(0,0);
 }
+.logo{
+  margin:10px 12px;
+  transition: all 0.2s;
+  transform: rotate(0deg);
+}
+.hide .logo{
+  transform: rotate(-90deg);
+}
 .hide{
   opacity: 0;
   transform: translate(10px,0);
@@ -53,9 +63,6 @@ section.sidebar{
   letter-spacing: 2px;
   font-size: 1.3rem;
   margin-top:2px;
-}
-svg.logo{
-  margin:10px;
 }
 .sidebar-body{
   height:calc(100% - $headheight);
@@ -74,8 +81,60 @@ section.main{
   left:0px;
   bottom:0px;
   right:0px;
+  z-index: 99;
 }
 .line{
   stroke:white;
   stroke-width:2px;
+}
+
+.content{
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.url-input-wrap{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.url-input{
+  height: 55px;
+  background: transparent;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid grey;
+  width: 300px;
+  font-size: 22px;
+  color: white;
+}
+.url-input:focus{
+  border-bottom: 2px solid white;
+}
+.url-input-button{
+  height:52px;
+  width:55px;
+  font-size:19px;
+  border:1px solid white;
+  outline:none;
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  margin-left:8px;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+}
+.url-input-button:focus{
+  outline:none;
+}
+.url-input-button:hover{
+  border:2px solid white;
+  background: rgba(255,255,255,0.4);
+}
+.url-input-button[disabled]{
+  border:1px solid grey;
+  color:grey;
 }
