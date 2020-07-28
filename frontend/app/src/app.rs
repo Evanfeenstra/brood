@@ -60,18 +60,18 @@ impl Component for App {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let storage = StorageService::new(Area::Local).unwrap();
-        let coins = {
-            if let Json(Ok(restored_coins)) = storage.restore(KEY) {
-                restored_coins
+        let persisted_url:String = {
+            if let Json(Ok(persisted)) = storage.restore(KEY) {
+                persisted
             } else {
-                Vec::new()
+                "".to_string()
             }
         };
         let state = State {
-            coins,
+            coins: Vec::new(),
             value: "".to_string(),
             initted: false,
-            shimmer_url: "".to_string(),
+            shimmer_url: persisted_url,
             url_input_value: "".to_string(),
             fetching: false,
         };
@@ -120,7 +120,7 @@ impl Component for App {
             }
             Msg::Nope => {}
         }
-        self.storage.store(KEY, Json(&self.state.coins));
+        self.storage.store(KEY, Json(&self.state.shimmer_url));
         true
     }
 
@@ -199,7 +199,7 @@ impl App {
                 let res = FetchService::fetch(req, callback);
                 self.fetcher = Some(res.unwrap());
             },
-            Err(req) => () // handle error here
+            Err(e) => () // handle error here
         };
     }
 }
