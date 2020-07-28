@@ -189,14 +189,18 @@ impl App {
                 if meta.status.is_success() {
                     Msg::FetchReady(data)
                 } else {
-                    info!("HEY ETF!!!!");
+                    info!("Error Bad Request");
                     Msg::Nope // FIXME: Handle this error accordingly.
                 }
             },
         );
-        let request = Request::get(path).body(Nothing).unwrap();
-        let task = FetchService::fetch(request, callback).unwrap();
-        self.fetcher = Some(task);
+        match Request::get(path).body(Nothing) {
+            Ok(req) => {
+                let res = FetchService::fetch(req, callback);
+                self.fetcher = Some(res.unwrap());
+            },
+            Err(req) => () // handle error here
+        };
     }
 }
 
