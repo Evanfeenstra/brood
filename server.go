@@ -57,7 +57,7 @@ func initChi(isDev bool) *chi.Mux {
 			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-User", "authorization"},
 			AllowCredentials: true,
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
-			Debug:            true,
+			Debug:            false,
 		})
 		r.Use(cors.Handler)
 	}

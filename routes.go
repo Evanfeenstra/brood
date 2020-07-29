@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -28,9 +29,29 @@ const (
 type Check struct {
 	URL string `json:"url"`
 }
+type InfoReq struct {
+	Version    string `json:"version"`
+	Synced     bool   `json:"synced"`
+	IdentityID string `json:"identityID"`
+}
 type InfoRes struct {
-	Version string `json:"version"`
-	Synced  bool   `json:"synced"`
+	Version    string `json:"version"`
+	Synced     bool   `json:"synced"`
+	IdentityID string `json:"identity_id"`
+	HasWallet  bool   `json:"has_wallet"`
+}
+
+// run this after every update to state
+func writeWalletState() error {
+	state := walletState.ExportState()
+
+	configDirs := configdir.New(vendorName, appName)
+	folders := configDirs.QueryFolders(configdir.Global)
+	if len(folders) == 0 {
+		return errors.New("no file")
+	}
+	folders[0].WriteFile(walletPath, state)
+	return nil
 }
 
 func checkWallet(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +65,6 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
-	fmt.Println(check.URL)
 
 	req, err := http.Get(check.URL + "/info")
 	if err != nil {
@@ -53,7 +73,7 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 	}
 	defer req.Body.Close()
 
-	info := InfoRes{}
+	info := InfoReq{}
 	res, err := ioutil.ReadAll(req.Body)
 	err = json.Unmarshal(res, &info)
 	if err != nil {
@@ -61,24 +81,65 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// configDirs := configdir.New(vendorName, appName)
-	// folder := configDirs.QueryFolderContainsFile(walletPath)
-	// if folder == nil { // no file
-	// 	w.WriteHeader(http.StatusBadRequest)
-	// 	return
-	// }
+	hasWallet := false
+	configDirs := configdir.New(vendorName, appName)
+	folder := configDirs.QueryFolderContainsFile(walletPath)
+	if folder != nil { // has file
+		hasWallet = true
+		err = reloadWallet(check.URL, folder)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("wallet state: %+v\n", walletState)
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(info)
+	json.NewEncoder(w).Encode(InfoRes{
+		IdentityID: info.IdentityID,
+		Synced:     info.Synced,
+		Version:    info.Version,
+		HasWallet:  hasWallet,
+	})
 }
 
 func createWallet(w http.ResponseWriter, r *http.Request) {
-	configDirs := configdir.New(vendorName, appName)
 
-	folder := configDirs.QueryFolderContainsFile(walletPath)
-	if folder == nil { // no file
-		w.WriteHeader(http.StatusBadRequest)
+	check := Check{}
+	body, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	err = json.Unmarshal(body, &check)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
+	fmt.Println(check.URL)
+
+	seed := walletseed.NewSeed()
+	lastAddressIndex := uint64(0)
+	spentAddresses := []bitmask.BitMask{}
+	assetRegistry := wallet.NewAssetRegistry()
+
+	walletState = wallet.New(
+		wallet.WebAPI(check.URL),
+		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
+	)
+
+	err = writeWalletState()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"seed": base58.Encode(seed.Bytes()),
+	})
+}
+
+func reloadWallet(url string, folder *configdir.Config) error {
+
 	data, _ := folder.ReadFile(walletPath)
 
 	marshalUtil := marshalutil.New(data)
@@ -86,14 +147,12 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 	seedBytes, err := marshalUtil.ReadBytes(ed25519.SeedSize)
 	seed := walletseed.NewSeed(seedBytes)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return err
 	}
 
 	lastAddressIndex, err := marshalUtil.ReadUint64()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return err
 	}
 
 	assetRegistry, _, err := wallet.ParseAssetRegistry(marshalUtil)
@@ -102,12 +161,10 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 	spentAddresses := *(*[]bitmask.BitMask)(unsafe.Pointer(&spentAddressesBytes))
 
 	walletState = wallet.New(
-		wallet.WebAPI(config.WebAPI),
+		wallet.WebAPI(url),
 		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
 	)
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(base58.Encode(seed.Bytes()))
+	return nil
 }
 
 func getBalance(w http.ResponseWriter, r *http.Request) {

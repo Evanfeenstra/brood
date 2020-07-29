@@ -17,7 +17,7 @@ use yew::services::{
 use yew::format::{Text, Nothing};
 use anyhow::{anyhow};
 
-use crate::components::{logo::Logo, grid::Grid, gear::Gear};
+use crate::components::{logo::Logo, grid::Grid, gear::Gear, loading::Loading};
 
 const KEY: &str = "yew.brood.self.shimmer_url";
 
@@ -39,6 +39,9 @@ pub struct State {
     synced: bool,
     version: String,
     seed: String,
+    identity_id: String,
+    settings_active: bool,
+    has_wallet: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -55,6 +58,9 @@ pub enum Msg {
     EnterURL,
     FetchReady(&'static str, String),
     FetchErr(anyhow::Error),
+    SettingsClicked,
+    Create,
+    SeedCopied,
     Nope,
 }
 
@@ -63,6 +69,8 @@ pub enum Msg {
 pub struct CheckRes {
     version: String,
     synced: bool,
+    identity_id: String,
+    has_wallet: bool,
 }
 #[derive(Deserialize, Debug)]
 pub struct CreateRes {
@@ -76,14 +84,17 @@ impl Component for App {
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let storage = StorageService::new(Area::Local).unwrap();
         let state = State {
+            initted: false,
             coins: Vec::new(),
             value: "".to_string(),
-            initted: false,
             url_input_value: "".to_string(),
             fetching: false,
             synced: false,
             version: "".to_string(),
             seed: "".to_string(),
+            identity_id: "".to_string(),
+            settings_active: false,
+            has_wallet: false,
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -134,11 +145,23 @@ impl Component for App {
             Msg::FetchReady(path, data) => {
                 self.state.fetching = false;
                 self.parse_json_response(path, data);
-                info!("shimmer version: {:?}",self.state.version);
-                info!("shimmer synced: {:?}",self.state.synced)
+                info!("shimmer synced: {:?}",self.state.synced);
+                info!("has_wallet {:?}",self.state.has_wallet);
             }
             Msg::FetchErr(err) => {
                 warn!("{:?}",err)
+            }
+            Msg::Create => {
+                self.fetch_json("create", json!({
+                    "url": self.state.shimmer_url
+                })); 
+            }
+            Msg::SeedCopied => {
+                self.state.seed = "".to_string();
+                self.state.has_wallet = true;
+            }
+            Msg::SettingsClicked => {
+                self.state.settings_active = !self.state.settings_active;
             }
             Msg::Mint => {
                 let coin = Coin {
@@ -169,9 +192,7 @@ impl Component for App {
                             {self.view_coins()}
                         </div>
                     </section>
-                    <section class="content">
-                        {self.view_content()}
-                    </section>
+                    {self.view_content()}
                 </div>
             </main>
         }
@@ -191,26 +212,75 @@ impl App {
         if self.state.shimmer_url.len()==0 {
             return self.view_url_input()
         }
-        html! {}
+        let mut synced_text = "NOT SYNCED";
+        if self.state.synced {
+            synced_text = "SYNCED";
+        }
+        html! {
+            <section class="content">
+                <header class="content-header">
+                    <div /> // empty div for flex
+                    <div class="node-info">
+                        <div>{synced_text}</div>
+                        <div>{&self.state.identity_id}</div>
+                        <div>{&self.state.version}</div>
+                        <Gear active=self.state.settings_active 
+                            onclick=self.link.callback(|_| Msg::SettingsClicked)
+                        />
+                    </div>
+                </header>
+                <div class="content-body">
+                    {self.view_body()}
+                </div>
+            </section>
+        }
+    }
+    fn view_body(&self) -> Html {
+        if !self.state.has_wallet && self.state.seed.len()==0 {
+            return html!{
+                <div class="create">
+                    <p>{"Create your wallet!"}</p>
+                    <button class="button create-button"
+                        onclick=self.link.callback(|_| Msg::Create)
+                    >{"CREATE NOW"}</button>
+                </div>
+            }
+        }
+        if !self.state.has_wallet {
+            return html!{
+                <div class="show-seed">
+                    <p>{"Copy and save your seed. It will not be show again!"}</p>
+                    <pre>{&self.state.seed}</pre>
+                    <button class="button seed-button"
+                        onclick=self.link.callback(|_| Msg::SeedCopied)
+                    />
+                </div>
+            }
+        }
+        html!{
+            
+        }
     }
     fn view_url_input(&self) -> Html {
         html! {
-            <div class="url-input-wrap">
-                <input class="url-input"
-                    placeholder="Input your Shimmer URL"
-                    value=&self.state.url_input_value
-                    oninput=self.link.callback(|e: InputData| Msg::UpdateURL(e.value))
-                    onkeypress=self.link.callback(|e: KeyboardEvent| {
-                        if e.key() == "Enter" { Msg::EnterURL } else { Msg::Nope }
-                    })
-                />
-                <button class="url-input-button"
-                    disabled=self.state.url_input_value.len()==0
-                    onclick=self.link.callback(|_| Msg::EnterURL)
-                >
-                    {"OK"}
-                </button>
-            </div>
+            <section class="content-center">
+                <div class="url-input-wrap">
+                    <input class="url-input"
+                        placeholder="Input your Shimmer URL"
+                        value=&self.state.url_input_value
+                        oninput=self.link.callback(|e: InputData| Msg::UpdateURL(e.value))
+                        onkeypress=self.link.callback(|e: KeyboardEvent| {
+                            if e.key() == "Enter" { Msg::EnterURL } else { Msg::Nope }
+                        })
+                    />
+                    <button class="button url-input-button"
+                        disabled=self.state.url_input_value.len()==0
+                        onclick=self.link.callback(|_| Msg::EnterURL)
+                    >
+                        {"OK"}
+                    </button>
+                </div>
+            </section>
         }
     }
     fn fetch_json(&mut self, path:&'static str, body: Value) {
@@ -242,6 +312,8 @@ impl App {
                 json.map(|data| {
                     self.state.synced = data.synced;
                     self.state.version = data.version;
+                    self.state.identity_id = data.identity_id;
+                    self.state.has_wallet = data.has_wallet;
                 }).ok();
             }
             "create"=>{
