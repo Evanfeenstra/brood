@@ -16,6 +16,7 @@ use yew::services::{
 };
 use yew::format::{Text, Nothing};
 use anyhow::{anyhow};
+use std::collections::HashMap;
 
 use crate::components::{logo::Logo, grid::Grid, gear::Gear, loading::Loading};
 
@@ -42,6 +43,9 @@ pub struct State {
     identity_id: String,
     settings_active: bool,
     has_wallet: bool,
+    confirmed_balance: HashMap<String, u64>,
+    pending_balance: HashMap<String, u64>,
+    addresses: Vec<Address>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -61,6 +65,7 @@ pub enum Msg {
     SettingsClicked,
     Create,
     SeedCopied,
+    Balance,
     Nope,
 }
 
@@ -75,6 +80,22 @@ pub struct CheckRes {
 #[derive(Deserialize, Debug)]
 pub struct CreateRes {
     seed: String,
+}
+#[derive(Deserialize, Debug)]
+pub struct BalanceRes {
+    confirmed_balance: HashMap<String, u64>,
+    pending_balance: HashMap<String, u64>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AddressesRes {
+    addresses: Vec<Address>,
+}
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Address {
+    address: String,
+    index: i64,
+    is_spent: bool,
+    is_receive: bool,
 }
 
 impl Component for App {
@@ -95,6 +116,9 @@ impl Component for App {
             identity_id: "".to_string(),
             settings_active: false,
             has_wallet: false,
+            confirmed_balance: HashMap::new(),
+            pending_balance: HashMap::new(),
+            addresses: Vec::new(),
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -126,7 +150,7 @@ impl Component for App {
             Msg::UpdateURL(val) => {
                 self.state.url_input_value = val;
             }
-            Msg::EnterURL => {
+            Msg::EnterURL=> {
                 let mut val = self.state.url_input_value.clone();
                 if val.chars().last()==Some('/') {
                     val.pop();
@@ -139,31 +163,43 @@ impl Component for App {
                     "url": self.state.shimmer_url
                 }));   
             }
-            Msg::ShowIcon => {
+            Msg::ShowIcon=> {
                 self.state.initted = true;
             }
-            Msg::FetchReady(path, data) => {
+            Msg::FetchReady(path, data)=> {
                 self.state.fetching = false;
                 self.parse_json_response(path, data);
-                info!("shimmer synced: {:?}",self.state.synced);
-                info!("has_wallet {:?}",self.state.has_wallet);
+
+                // wallet is there! load data
+                if path=="check" && self.state.has_wallet {
+                    self.fetch_json("balance", json!({}));
+                }
+                if path=="balance" {
+                    self.fetch_json("addresses", json!({}));
+                }
+                if path=="addresses" {
+                    self.fetch_json("coins", json!({}));
+                }
             }
-            Msg::FetchErr(err) => {
+            Msg::FetchErr(err)=> {
                 warn!("{:?}",err)
             }
-            Msg::Create => {
+            Msg::Create=> {
                 self.fetch_json("create", json!({
                     "url": self.state.shimmer_url
                 })); 
             }
-            Msg::SeedCopied => {
+            Msg::SeedCopied=> {
                 self.state.seed = "".to_string();
                 self.state.has_wallet = true;
             }
-            Msg::SettingsClicked => {
+            Msg::Balance=> {
+                self.fetch_json("balance", json!({})); 
+            }
+            Msg::SettingsClicked=> {
                 self.state.settings_active = !self.state.settings_active;
             }
-            Msg::Mint => {
+            Msg::Mint=> {
                 let coin = Coin {
                     description: self.state.value.clone(),
                     completed: false,
@@ -172,7 +208,7 @@ impl Component for App {
                 self.state.coins.push(coin);
                 self.state.value = "".to_string();
             }
-            Msg::Nope => {}
+            Msg::Nope=> {}
         }
         self.storage.store(KEY, Json(&self.state.shimmer_url));
         true
@@ -208,6 +244,11 @@ impl App {
     fn view_content(&self) -> Html {
         if !self.state.initted {
             return html! {}
+        }
+        if self.state.fetching {
+            return html!{<section class="content-center">
+                <Loading big={true} />
+            </section>}
         }
         if self.state.shimmer_url.len()==0 {
             return self.view_url_input()
@@ -249,7 +290,7 @@ impl App {
         if !self.state.has_wallet {
             return html!{
                 <div class="show-seed">
-                    <p>{"Copy and save your seed. It will not be show again!"}</p>
+                    <p>{"Copy and save your seed. It will not be shown again!"}</p>
                     <pre>{&self.state.seed}</pre>
                     <button class="button seed-button"
                         onclick=self.link.callback(|_| Msg::SeedCopied)
@@ -293,6 +334,7 @@ impl App {
                         Err(e)=> Msg::FetchErr(e),
                     }
                 } else {
+                    info!("error: {:?}",meta.status);
                     Msg::FetchErr(anyhow!("cant fetch"))
                 }
             },
@@ -320,6 +362,20 @@ impl App {
                 let json: Result<CreateRes,Error> = from_str(r.as_str());
                 json.map(|data| {
                     self.state.seed = data.seed;
+                }).ok();
+            }
+            "balance"=>{
+                info!("{:?}","GOT BALANCE RES???");
+                let json: Result<BalanceRes,Error> = from_str(r.as_str());
+                json.map(|data| {
+                    self.state.confirmed_balance = data.confirmed_balance;
+                    self.state.pending_balance = data.pending_balance;
+                }).ok();
+            }
+            "addresses"=>{
+                let json: Result<AddressesRes,Error> = from_str(r.as_str());
+                json.map(|data| {
+                    self.state.addresses = data.addresses;
                 }).ok();
             }
             &_=>()

@@ -1,12 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
+	"errors"
 	"unsafe"
-
-	"github.com/mr-tron/base58"
 
 	"github.com/iotaledger/goshimmer/client/wallet"
 	walletseed "github.com/iotaledger/goshimmer/client/wallet/packages/seed"
@@ -14,89 +10,51 @@ import (
 	"github.com/iotaledger/hive.go/bitmask"
 	"github.com/iotaledger/hive.go/crypto/ed25519"
 	"github.com/iotaledger/hive.go/marshalutil"
+
+	"github.com/shibukawa/configdir"
 )
 
-func loadWallet() *wallet.Wallet {
-	seed, lastAddressIndex, spentAddresses, assetRegistry, err := importWalletStateFile("wallet.dat")
-	if err != nil {
-		panic(err)
-	}
+func reloadWallet(url string, folder *configdir.Config) error {
 
-	return wallet.New(
-		wallet.WebAPI(config.WebAPI),
-		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
-	)
-}
+	data, _ := folder.ReadFile(walletPath)
 
-func importWalletStateFile(filename string) (seed *walletseed.Seed, lastAddressIndex uint64, spentAddresses []bitmask.BitMask, assetRegistry *wallet.AssetRegistry, err error) {
-	walletStateBytes, err := ioutil.ReadFile(filename)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
-
-		seed = walletseed.NewSeed()
-		lastAddressIndex = 0
-		spentAddresses = []bitmask.BitMask{}
-		err = nil
-
-		fmt.Println("GENERATING NEW WALLET ...                                 [DONE]")
-		fmt.Println()
-		fmt.Println("================================================================")
-		fmt.Println("!!!            PLEASE CREATE A BACKUP OF YOUR SEED           !!!")
-		fmt.Println("!!!                                                          !!!")
-		fmt.Println("!!!       " + base58.Encode(seed.Bytes()) + "       !!!")
-		fmt.Println("!!!                                                          !!!")
-		fmt.Println("!!!            PLEASE CREATE A BACKUP OF YOUR SEED           !!!")
-		fmt.Println("================================================================")
-
-		return
-	}
-
-	marshalUtil := marshalutil.New(walletStateBytes)
+	marshalUtil := marshalutil.New(data)
 
 	seedBytes, err := marshalUtil.ReadBytes(ed25519.SeedSize)
-	seed = walletseed.NewSeed(seedBytes)
+	seed := walletseed.NewSeed(seedBytes)
 	if err != nil {
-		return
+		return err
 	}
 
-	lastAddressIndex, err = marshalUtil.ReadUint64()
+	lastAddressIndex, err := marshalUtil.ReadUint64()
 	if err != nil {
-		return
+		return err
 	}
 
-	assetRegistry, _, err = wallet.ParseAssetRegistry(marshalUtil)
+	assetRegistry, _, err := wallet.ParseAssetRegistry(marshalUtil)
 
 	spentAddressesBytes := marshalUtil.ReadRemainingBytes()
-	spentAddresses = *(*[]bitmask.BitMask)(unsafe.Pointer(&spentAddressesBytes))
+	spentAddresses := *(*[]bitmask.BitMask)(unsafe.Pointer(&spentAddressesBytes))
 
-	return
+	walletState = wallet.New(
+		wallet.WebAPI(url),
+		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
+	)
+	return nil
 }
 
-func writeWalletStateFile(wallet *wallet.Wallet, filename string) {
-	var skipRename bool
-	info, err := os.Stat(filename)
+func loadWallet() error {
+	if walletState != nil {
+		return nil // already loaded, good to go
+	}
+	configDirs := configdir.New(vendorName, appName)
+	folder := configDirs.QueryFolderContainsFile(walletPath)
+	if folder == nil {
+		return errors.New("no file")
+	}
+	err := reloadWallet(shimmerURL, folder)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			panic(err)
-		}
-
-		skipRename = true
+		return err
 	}
-	if err == nil && info.IsDir() {
-		panic("found directory instead of file at " + filename)
-	}
-
-	if !skipRename {
-		err = os.Rename(filename, filename+".bkp")
-		if err != nil && os.IsNotExist(err) {
-			panic(err)
-		}
-	}
-
-	err = ioutil.WriteFile(filename, wallet.ExportState(), 0644)
-	if err != nil {
-		panic(err)
-	}
+	return nil
 }

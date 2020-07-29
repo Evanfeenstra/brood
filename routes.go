@@ -6,13 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"unsafe"
 
 	"github.com/iotaledger/goshimmer/client/wallet"
 	walletseed "github.com/iotaledger/goshimmer/client/wallet/packages/seed"
 	"github.com/iotaledger/hive.go/bitmask"
-	"github.com/iotaledger/hive.go/crypto/ed25519"
-	"github.com/iotaledger/hive.go/marshalutil"
 
 	"github.com/mr-tron/base58"
 	"github.com/shibukawa/configdir"
@@ -20,26 +17,13 @@ import (
 
 var walletState *wallet.Wallet
 
+var shimmerURL string
+
 const (
 	vendorName = "evanfeenstra"
 	appName    = "brood"
 	walletPath = "wallet.dat"
 )
-
-type Check struct {
-	URL string `json:"url"`
-}
-type InfoReq struct {
-	Version    string `json:"version"`
-	Synced     bool   `json:"synced"`
-	IdentityID string `json:"identityID"`
-}
-type InfoRes struct {
-	Version    string `json:"version"`
-	Synced     bool   `json:"synced"`
-	IdentityID string `json:"identity_id"`
-	HasWallet  bool   `json:"has_wallet"`
-}
 
 // run this after every update to state
 func writeWalletState() error {
@@ -65,6 +49,7 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
+	shimmerURL = check.URL
 
 	req, err := http.Get(check.URL + "/info")
 	if err != nil {
@@ -114,7 +99,6 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotAcceptable)
 		return
 	}
-	fmt.Println(check.URL)
 
 	seed := walletseed.NewSeed()
 	lastAddressIndex := uint64(0)
@@ -138,35 +122,61 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func reloadWallet(url string, folder *configdir.Config) error {
-
-	data, _ := folder.ReadFile(walletPath)
-
-	marshalUtil := marshalutil.New(data)
-
-	seedBytes, err := marshalUtil.ReadBytes(ed25519.SeedSize)
-	seed := walletseed.NewSeed(seedBytes)
+func getBalance(w http.ResponseWriter, r *http.Request) {
+	err := loadWallet()
+	confirmedBalance, pendingBalance, err := walletState.Balance()
 	if err != nil {
-		return err
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
-	lastAddressIndex, err := marshalUtil.ReadUint64()
-	if err != nil {
-		return err
+	cb := BalanceRes{}
+	for color, amount := range confirmedBalance {
+		cb[color.String()] = amount
 	}
-
-	assetRegistry, _, err := wallet.ParseAssetRegistry(marshalUtil)
-
-	spentAddressesBytes := marshalUtil.ReadRemainingBytes()
-	spentAddresses := *(*[]bitmask.BitMask)(unsafe.Pointer(&spentAddressesBytes))
-
-	walletState = wallet.New(
-		wallet.WebAPI(url),
-		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
-	)
-	return nil
+	pb := BalanceRes{}
+	for color, amount := range pendingBalance {
+		pb[color.String()] = amount
+	}
+	fmt.Printf("asdf: %+v\n", map[string]BalanceRes{
+		"confirmed_balance": cb,
+		"pending_balance":   pb,
+	})
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]BalanceRes{
+		"confirmed_balance": cb,
+		"pending_balance":   pb,
+	})
 }
 
-func getBalance(w http.ResponseWriter, r *http.Request) {
+func getAddresses(w http.ResponseWriter, r *http.Request) {
+	err := loadWallet()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	addys := []AddressRes{}
+
+	receiveAddy := walletState.ReceiveAddress().String()
+	for _, addr := range walletState.AddressManager().Addresses() {
+		addys = append(addys, AddressRes{
+			Address:   addr.String(),
+			Index:     addr.Index,
+			IsSpent:   walletState.AddressManager().IsAddressSpent(addr.Index),
+			IsReceive: addr.String() == receiveAddy,
+		})
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string][]AddressRes{
+		"addresses": addys,
+	})
+}
+
+func getCoins(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{
+		"coins": true,
+	})
 }

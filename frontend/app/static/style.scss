@@ -196,10 +196,7 @@ section.main{
   width:165px;
 }
 
-.loading.big{
-  height:90px;
-  width:90px;
-}
+
 .loading{
   height:32px;
   width:32px;
@@ -207,6 +204,10 @@ section.main{
   animation-duration: 600ms;
   animation-iteration-count: infinite;
   animation-timing-function: linear; 
+}
+.loading.big{
+  height:48px;
+  width:48px;
 }
 @keyframes spin {
   from {
