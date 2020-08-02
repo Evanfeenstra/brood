@@ -1,7 +1,10 @@
 #![recursion_limit = "1024"]
 
-mod app;
+pub mod app;
+pub mod fetcher;
 pub mod components;
+pub mod utils;
+pub mod views;
 
 use wasm_bindgen::prelude::*;
 

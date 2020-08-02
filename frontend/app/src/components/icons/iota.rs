@@ -1,15 +1,15 @@
 use yew::{html, Component, ComponentLink, Html, ShouldRender};
 
-pub struct Logo {}
+pub struct IOTA {}
 
 pub enum Msg {}
 
-impl Component for Logo {
+impl Component for IOTA {
     type Message = Msg;
     type Properties = ();
 
     fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Logo {}
+        IOTA {}
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
