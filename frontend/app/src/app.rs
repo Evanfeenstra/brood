@@ -46,9 +46,10 @@ pub struct State {
     pub confirmed_balance: HashMap<String, u64>,
     pub pending_balance: HashMap<String, u64>,
     pub addresses: Vec<Address>,
+    pub selected_color: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Coin {
     pub name: String,
     pub color: String,
@@ -78,6 +79,7 @@ pub enum Msg {
     Balance,
     TimeoutDone,
     FaucetClicked,
+    CoinClicked(String),
     Nope,
 }
 
@@ -103,6 +105,7 @@ impl Component for App {
             confirmed_balance: HashMap::new(),
             pending_balance: HashMap::new(),
             addresses: Vec::new(),
+            selected_color: "".to_string(),
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -198,6 +201,13 @@ impl Component for App {
                 if !self.state.fetching {
                     self.state.fetching = true;
                     self.fetch_json("faucet", json!({}));
+                }
+            }
+            Msg::CoinClicked(color)=> {
+                if self.state.selected_color==color {
+                    self.state.selected_color = "".to_string();
+                } else {
+                    self.state.selected_color=color;
                 }
             }
             Msg::Mint=> {

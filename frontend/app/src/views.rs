@@ -1,7 +1,7 @@
-
+use log::{info,warn};
 use yew::prelude::*;
-use crate::components::{grid::Grid};
-use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, faucet::Faucet};
+use crate::components::{grid::Grid, page::Page};
+use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, faucet::Faucet, iota::IOTA};
 
 use crate::app::{App, Msg, Coin};
 
@@ -28,10 +28,22 @@ pub fn view_coins(&self) -> Html {
 }
 
 pub fn view_coin(&self, (idx, coin): (usize, &Coin)) -> Html {
-    let balance = self.state.confirmed_balance[&coin.color];
+    let color = coin.color.clone();
+    let balance = self.state.confirmed_balance[&color];
+    let is_selected = self.state.selected_color==color;
+    let view_logo = || {
+        if coin.color.clone()=="IOTA" {
+            return html!{<IOTA />}
+        }
+        html!{}
+    };
     html! {
-        <div class="coin">
-            <div class="coin-name">{&coin.name}</div>
+        <div class=if is_selected {"coin selected"} else {"coin"} 
+        onclick=self.link.callback(move |_| Msg::CoinClicked(color.clone()))>
+            <div class="coin-left">
+                {view_logo()}
+                <div class="coin-name">{&coin.name}</div>
+            </div>
             <div class="coin-balance">{balance}</div>
         </div>
     }
@@ -61,6 +73,20 @@ pub fn view_content(&self) -> Html {
     if self.state.shimmer_url.len()==0 {
         return self.view_url_input()
     }
+    html! {
+        <section class="content">
+            <header class="content-header">
+                {self.view_receive()}
+                {self.view_info()}
+            </header>
+            <div class="content-body">
+                {self.view_body()}
+            </div>
+        </section>
+    }
+}
+
+pub fn view_info(&self) -> Html {
     let mut synced_text = "NOT SYNCED";
     if self.state.synced {
         synced_text = "SYNCED";
@@ -74,32 +100,22 @@ pub fn view_content(&self) -> Html {
         }
         html!{}
     };
-    html! {
-        <section class="content">
-            <header class="content-header">
-                {self.view_receive()}
-                <div class="node-info">
-                    {view_settings()}
-                    <div>{synced_text}</div>
-                    <Gear active=self.state.settings_active 
-                        onclick=self.link.callback(|_| Msg::SettingsClicked)
-                    />
-                </div>
-            </header>
-            <div class="content-body">
-                {self.view_body()}
-            </div>
-        </section>
+    html!{
+        <div class="node-info">
+            {view_settings()}
+            <div>{synced_text}</div>
+            <Gear active=self.state.settings_active 
+                onclick=self.link.callback(|_| Msg::SettingsClicked)
+            />
+        </div>
     }
 }
 
 pub fn view_receive(&self) -> Html {
-    let mut receive_address="".to_string();
-    for addy in self.state.addresses.iter() {
-        match addy.is_receive {
-            true=> receive_address=addy.address.clone(),
-            false=>()
-        }
+    let receiver = self.state.addresses.iter().find(|&addy| addy.is_receive);
+    let receive_address = match receiver {
+        Some(a)=> a.address.clone(),
+        None=>"".to_string(),
     };
     return html!{<div class="receive-wrap">
         <div class=if self.state.receive_active {"receive show"} else {"receive"}>
@@ -145,8 +161,10 @@ pub fn view_body(&self) -> Html {
             </div>
         }
     }
+
+    let coin = self.state.coins.iter().find(|&c| c.color==self.state.selected_color );
     html!{
-        
+        // <Page coin=&coin />
     }
 }
 

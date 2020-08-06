@@ -51,13 +51,16 @@ section.sidebar{
   transition: all 0.2s;
   transform: translate(0,0);
 }
+.iota{
+  margin:0 1px 0 15px;
+}
 .logo{
   margin:10px 10px;
   transition: all 0.2s;
-  transform: rotate(0deg) scaleY(-1);
+  transform: rotate(0) scaleY(-1);
 }
 .hide .logo{
-  transform: rotate(-90deg) scaleY(-1);
+  transform: rotate(90deg) scaleY(-1);
 }
 .hide{
   opacity: 0;
@@ -318,6 +321,13 @@ section.main{
 }
 .coin:hover{
   background: rgba(255,255,255,0.2);
+}
+.coin.selected{
+  background: rgba(255,255,255,0.3);
+}
+.coin-left{
+  display: flex;
+  align-items: center;
 }
 .coin-name{
   margin:0 13px;
