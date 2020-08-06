@@ -11,6 +11,7 @@ html,body,main.wrapper{
   display:flex;
   flex:1;
   height:100%;
+  overflow: hidden;
 }
 html{
   font-family: 'Ubuntu', sans-serif;
@@ -51,12 +52,12 @@ section.sidebar{
   transform: translate(0,0);
 }
 .logo{
-  margin:10px 15px;
+  margin:10px 10px;
   transition: all 0.2s;
-  transform: rotate(0deg);
+  transform: rotate(0deg) scaleY(-1);
 }
 .hide .logo{
-  transform: rotate(-90deg);
+  transform: rotate(-90deg) scaleY(-1);
 }
 .hide{
   opacity: 0;
@@ -235,7 +236,7 @@ section.main{
 .receive{
   width:362px;
   height: $headheight;
-  transition:transform 0.15s;
+  transition:transform 0.1s;
   transform: translateX(-317px);
   position: relative;
   display: flex;
@@ -300,4 +301,28 @@ section.main{
 }
 .faucet:hover{
   transform: scale(-1.05, 1.05);
+}
+
+.coins{
+  width:100%;
+}
+.coin{
+  display: flex;
+  height: 50px;
+  border-bottom: 1px solid white;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.1);
+  cursor: pointer;
+}
+.coin:hover{
+  background: rgba(255,255,255,0.2);
+}
+.coin-name{
+  margin:0 13px;
+}
+.coin-balance{
+  margin:0 16px;
+  font-size:13px;
 }

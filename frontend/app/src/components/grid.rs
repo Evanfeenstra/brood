@@ -47,7 +47,7 @@ impl Component for Grid {
             state,
             props,
             render_loop: None,
-            speed: 75,
+            speed: 120,
             points: Vec::new(),
         }
     }

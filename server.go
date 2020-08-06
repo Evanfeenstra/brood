@@ -31,9 +31,8 @@ func srv(port string, isDev bool) *http.Server {
 	r.Group(func(r chi.Router) {
 		r.Post("/check", checkWallet)
 		r.Post("/create", createWallet)
-		r.Post("/balance", getBalance)
-		r.Post("/addresses", getAddresses)
-		r.Post("/coins", getCoins)
+		r.Post("/state", getState)
+		r.Post("/faucet", faucet)
 	})
 
 	server := &http.Server{Addr: ":" + port, Handler: r}

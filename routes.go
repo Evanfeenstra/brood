@@ -9,6 +9,7 @@ import (
 
 	"github.com/iotaledger/goshimmer/client/wallet"
 	walletseed "github.com/iotaledger/goshimmer/client/wallet/packages/seed"
+	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/hive.go/bitmask"
 
 	"github.com/mr-tron/base58"
@@ -122,38 +123,35 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func getBalance(w http.ResponseWriter, r *http.Request) {
+func getState(w http.ResponseWriter, r *http.Request) {
 	err := loadWallet()
+
 	confirmedBalance, pendingBalance, err := walletState.Balance()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	cb := BalanceRes{}
+	colorIOTA := balance.ColorIOTA
+
+	coins := []Coin{}
+	cb := BalanceRes{colorIOTA.String(): 0} // init with IOTa=0
 	for color, amount := range confirmedBalance {
 		cb[color.String()] = amount
+		coins = addToCoins(coins, Coin{
+			Color:  color.String(),
+			Name:   walletState.AssetRegistry().Name(color),
+			Symbol: walletState.AssetRegistry().Symbol(color),
+		})
 	}
 	pb := BalanceRes{}
 	for color, amount := range pendingBalance {
 		pb[color.String()] = amount
-	}
-	fmt.Printf("asdf: %+v\n", map[string]BalanceRes{
-		"confirmed_balance": cb,
-		"pending_balance":   pb,
-	})
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]BalanceRes{
-		"confirmed_balance": cb,
-		"pending_balance":   pb,
-	})
-}
-
-func getAddresses(w http.ResponseWriter, r *http.Request) {
-	err := loadWallet()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		coins = addToCoins(coins, Coin{
+			Color:  color.String(),
+			Name:   walletState.AssetRegistry().Name(color),
+			Symbol: walletState.AssetRegistry().Symbol(color),
+		})
 	}
 
 	addys := []AddressRes{}
@@ -168,15 +166,57 @@ func getAddresses(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	hasIOTA := false
+	for _, c := range coins {
+		if c.Color == colorIOTA.String() {
+			hasIOTA = true
+		}
+	}
+	if !hasIOTA {
+		coins = addToCoins(coins, Coin{
+			Color:  colorIOTA.String(),
+			Name:   walletState.AssetRegistry().Name(colorIOTA),
+			Symbol: walletState.AssetRegistry().Symbol(colorIOTA),
+		})
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string][]AddressRes{
-		"addresses": addys,
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"confirmed_balance": cb,
+		"pending_balance":   pb,
+		"coins":             coins,
+		"addresses":         addys,
 	})
 }
 
-func getCoins(w http.ResponseWriter, r *http.Request) {
+func faucet(w http.ResponseWriter, r *http.Request) {
+	err := loadWallet()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = walletState.RequestFaucetFunds(true)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]bool{
-		"coins": true,
+		"success": true,
 	})
+}
+
+func addToCoins(coins []Coin, coin Coin) []Coin {
+	alreadyHas := false
+	for _, c := range coins {
+		if c.Color == coin.Color {
+			alreadyHas = true
+		}
+	}
+	if alreadyHas {
+		return coins
+	}
+	return append(coins, coin)
 }

@@ -44,15 +44,20 @@ func reloadWallet(url string, folder *configdir.Config) error {
 }
 
 func loadWallet() error {
-	if walletState != nil {
-		return nil // already loaded, good to go
-	}
+	// if walletState != nil {
+	// 	return nil // already loaded, good to go
+	// }
 	configDirs := configdir.New(vendorName, appName)
 	folder := configDirs.QueryFolderContainsFile(walletPath)
 	if folder == nil {
 		return errors.New("no file")
 	}
 	err := reloadWallet(shimmerURL, folder)
+
+	if err = walletState.Refresh(); err != nil {
+		return err
+	}
+
 	if err != nil {
 		return err
 	}

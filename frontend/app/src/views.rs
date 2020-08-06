@@ -3,7 +3,7 @@ use yew::prelude::*;
 use crate::components::{grid::Grid};
 use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, faucet::Faucet};
 
-use crate::app::{App, Msg};
+use crate::app::{App, Msg, Coin};
 
 impl App {
 
@@ -21,7 +21,19 @@ pub fn view_app(&self) -> Html {
 
 pub fn view_coins(&self) -> Html {
     html! {
-        <div>{"."}</div>
+        <div class="coins">
+            {for self.state.coins.iter().enumerate().map(|e| self.view_coin(e)) }
+        </div>
+    }
+}
+
+pub fn view_coin(&self, (idx, coin): (usize, &Coin)) -> Html {
+    let balance = self.state.confirmed_balance[&coin.color];
+    html! {
+        <div class="coin">
+            <div class="coin-name">{&coin.name}</div>
+            <div class="coin-balance">{balance}</div>
+        </div>
     }
 }
 
@@ -95,7 +107,7 @@ pub fn view_receive(&self) -> Html {
                 <div class="receive-label">
                     {"Receive Address:"}
                 </div>
-                <input readonly=true class="receive-addy" value={receive_address.clone()} />
+                <input readonly=true class="receive-addy" value={&receive_address} />
             </div>
             <button class=if self.state.copied {"receive-copy button copied"} else {"receive-copy button"}
                 onclick=self.link.callback(move |_| Msg::AddressCopied(receive_address.clone()))>
@@ -122,7 +134,7 @@ pub fn view_body(&self) -> Html {
             </div>
         }
     }
-    if !self.state.has_wallet {
+    if !self.state.has_wallet && self.state.seed.len()>0 {
         return html!{
             <div class="show-seed">
                 <p>{"Copy and save your seed. It will not be shown again!"}</p>
@@ -143,7 +155,7 @@ pub fn view_url_input(&self) -> Html {
         <section class="content-center">
             <div class="url-input-wrap">
                 <input class="url-input"
-                    placeholder="Input your Shimmer URL"
+                    placeholder="Enter your Shimmer URL"
                     value=&self.state.url_input_value
                     oninput=self.link.callback(|e: InputData| Msg::UpdateURL(e.value))
                     onkeypress=self.link.callback(|e: KeyboardEvent| {

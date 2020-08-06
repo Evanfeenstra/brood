@@ -50,9 +50,9 @@ pub struct State {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Coin {
-    name: String,
-    color: String,
-    symbol: String,
+    pub name: String,
+    pub color: String,
+    pub symbol: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

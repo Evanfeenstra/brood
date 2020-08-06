@@ -21,7 +21,8 @@ type AddressRes struct {
 	IsReceive bool   `json:"is_receive"`
 }
 type BalanceRes map[string]uint64
-type CoinRes struct {
+
+type Coin struct {
 	Color  string `json:"color"`
 	Name   string `json:"name"`
 	Symbol string `json:"symbol"`
