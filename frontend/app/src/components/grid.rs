@@ -122,16 +122,16 @@ impl Component for Grid {
 
         let total = self.state.total;
 
-        let start_final = total - 48;
+        let start_final = total - 54;
         let go_final = bigger_of(2, l-start_final);
-        let final_y2 = bigger_of(2, 50-go_final);
+        let final_y2 = bigger_of(2, 56-go_final);
         fn view_final_line(fy2:i16,go:i16)->Html {
             if go<=2 {
                 return html!{}
             }
             html!{
                 <Line 
-                    x1=280 y1=50
+                    x1=280 y1=56
                     x2=280 y2=fy2 as u16
                 />
             }
@@ -178,13 +178,13 @@ impl Grid {
         let w = self.state.width - 2;
         self.points = vec![
             (280,h),
-            (280,50),
-            (2,50),
+            (280,56),
+            (2,56),
             (2,h),
             (w,h),
             (w,2),
             (2,2),
-            (2,50),
+            (2,56),
         ];
         let total = self.points.iter().enumerate().fold(0, |sum, (i,p):(usize, &(i16,i16))| {
             let mut next = p; // so no len

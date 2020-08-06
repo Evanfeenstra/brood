@@ -1,7 +1,7 @@
 use log::{info,warn};
 use yew::prelude::*;
 use crate::components::{grid::Grid, page::Page};
-use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, faucet::Faucet, iota::IOTA};
+use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, faucet::Faucet, iota::IOTA, left::Left};
 
 use crate::app::{App, Msg, Coin};
 
@@ -53,7 +53,7 @@ pub fn view_sidebar(&self) -> Html {
     html!{<section class="sidebar">
         <header class=if self.state.initted {"sidebar-head"} else {"sidebar-head hide"}>
             <Logo />
-            <div class="title">{"brood wallet"}</div>
+            <div class="title">{"BROOD WALLET"}</div>
         </header>
         <div class="sidebar-body">
             {self.view_coins()}
@@ -103,7 +103,7 @@ pub fn view_info(&self) -> Html {
     html!{
         <div class="node-info">
             {view_settings()}
-            <div>{synced_text}</div>
+            <div class="synced">{synced_text}</div>
             <Gear active=self.state.settings_active 
                 onclick=self.link.callback(|_| Msg::SettingsClicked)
             />
@@ -119,6 +119,7 @@ pub fn view_receive(&self) -> Html {
     };
     return html!{<div class="receive-wrap">
         <div class=if self.state.receive_active {"receive show"} else {"receive"}>
+            <Left onclick=self.link.callback(|_| Msg::ReceiveClicked) />
             <div class="receive-input-wrap">
                 <div class="receive-label">
                     {"Receive Address:"}
@@ -129,9 +130,6 @@ pub fn view_receive(&self) -> Html {
                 onclick=self.link.callback(move |_| Msg::AddressCopied(receive_address.clone()))>
                 {if self.state.copied {"COPIED!"} else {"COPY"}}
             </button>
-            <Faucet active=self.state.fetching
-                onclick=self.link.callback(|_| Msg::FaucetClicked)
-            />
             <Wallet active=self.state.receive_active
                 onclick=self.link.callback(|_| Msg::ReceiveClicked)
             />
@@ -161,11 +159,21 @@ pub fn view_body(&self) -> Html {
             </div>
         }
     }
-
-    let coin = self.state.coins.iter().find(|&c| c.color==self.state.selected_color );
-    html!{
-        // <Page coin=&coin />
+    if self.state.selected_color.len()>0 {
+        let balance = self.state.confirmed_balance[&self.state.selected_color];
+        let coin = self.state.coins.iter().find(|&c| c.color==self.state.selected_color );
+        return match coin {
+            Some(c)=> html!{
+                <Page 
+                    color={&c.color} 
+                    name={&c.name}
+                    balance={balance}
+                />
+            },
+            None=>html!{},
+        }; 
     }
+    html!{}
 }
 
 pub fn view_url_input(&self) -> Html {

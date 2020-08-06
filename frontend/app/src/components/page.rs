@@ -5,6 +5,7 @@ use crate::app::{Coin};
 pub struct Page {
     link: ComponentLink<Self>,
     state: State,
+    props: Props,
 }
 
 struct State {
@@ -13,7 +14,9 @@ struct State {
 
 #[derive(Properties, Clone)]
 pub struct Props {
-    pub coin: Coin,
+    pub name: String,
+    pub color: String,
+    pub balance: u64,
 }
 
 pub enum Msg {}
@@ -29,6 +32,7 @@ impl Component for Page {
         Page {
             link,
             state,
+            props,
         }
     }
 
@@ -42,7 +46,24 @@ impl Component for Page {
 
     fn view(&self) -> Html {
         html! {
-            <div>{"coin"}</div>
+            <div class="page">
+                <div class="page-name">{&self.props.name}</div>
+                <div class="page-balance">
+                    {"Balance:  "}
+                    {&self.props.balance}
+                </div>
+                {self.view_send()}
+            </div>
         }
     }
+}
+
+impl Page {
+
+pub fn view_send(&self) -> Html {
+    html! {
+        <div class="send">{"SEND"}</div>
+    }
+}
+
 }

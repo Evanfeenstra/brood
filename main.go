@@ -31,7 +31,7 @@ func main() {
 	}()
 
 	w.SetTitle("Brood Wallet")
-	w.SetSize(999, 650, webview.HintNone)
+	w.SetSize(900, 650, webview.HintNone)
 
 	appPort := port
 	if isDev {
