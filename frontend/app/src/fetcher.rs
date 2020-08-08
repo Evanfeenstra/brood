@@ -9,7 +9,7 @@ use yew::format::Json;
 use yew::services::{
     fetch::{FetchService, Request, Response},
 };
-use yew::format::{Text, Nothing};
+use yew::format::{Text};
 use anyhow::{anyhow};
 use std::collections::HashMap;
 

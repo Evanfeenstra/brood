@@ -1,7 +1,6 @@
-use log::{info,warn};
 use yew::prelude::*;
 use crate::components::{grid::Grid, page::Page};
-use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, faucet::Faucet, iota::IOTA, left::Left};
+use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, iota::IOTA, left::Left};
 
 use crate::app::{App, Msg, Coin};
 
@@ -27,7 +26,7 @@ pub fn view_coins(&self) -> Html {
     }
 }
 
-pub fn view_coin(&self, (idx, coin): (usize, &Coin)) -> Html {
+pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
     let color = coin.color.clone();
     let balance = self.state.confirmed_balance[&color];
     let is_selected = self.state.selected_color==color;
@@ -163,13 +162,10 @@ pub fn view_body(&self) -> Html {
         let balance = self.state.confirmed_balance[&self.state.selected_color];
         let coin = self.state.coins.iter().find(|&c| c.color==self.state.selected_color );
         return match coin {
-            Some(c)=> html!{
-                <Page 
-                    color={&c.color} 
-                    name={&c.name}
-                    balance={balance}
-                />
-            },
+            Some(c)=> html!{<Page
+                coin={c}
+                balance={balance}
+            />},
             None=>html!{},
         }; 
     }

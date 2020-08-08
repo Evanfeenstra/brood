@@ -2,8 +2,6 @@ use log::{info,warn};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{json};
 use std::time::Duration;
-use strum::IntoEnumIterator;
-use strum_macros::{EnumIter, ToString};
 use yew::format::Json;
 use yew::prelude::*;
 use yew::services::{
@@ -12,9 +10,6 @@ use yew::services::{
     fetch::{FetchTask},
 };
 use std::collections::HashMap;
-
-use crate::components::{grid::Grid};
-use crate::components::icons::{logo::Logo};
 use crate::utils::web;
 
 const KEY: &str = "brood.shimmer_url";
@@ -49,7 +44,7 @@ pub struct State {
     pub selected_color: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Properties)]
 pub struct Coin {
     pub name: String,
     pub color: String,
@@ -78,7 +73,6 @@ pub enum Msg {
     AddressCopied(String),
     Balance,
     TimeoutDone,
-    FaucetClicked,
     CoinClicked(String),
     Nope,
 }
@@ -160,7 +154,7 @@ impl Component for App {
                 self.state.fetching = false;
                 self.parse_json_response(path, data);
                 // wallet is there! load data               // reload balance
-                if (path=="check" && self.state.has_wallet) || path=="faucet" {
+                if path=="check" && self.state.has_wallet {
                     self.fetch_json("state", json!({}));
                 }
             }
@@ -196,12 +190,6 @@ impl Component for App {
             Msg::ReceiveClicked=> {
                 self.state.settings_active = false;
                 self.state.receive_active = !self.state.receive_active;
-            }
-            Msg::FaucetClicked=> {
-                if !self.state.fetching {
-                    self.state.fetching = true;
-                    self.fetch_json("faucet", json!({}));
-                }
             }
             Msg::CoinClicked(color)=> {
                 if self.state.selected_color==color {

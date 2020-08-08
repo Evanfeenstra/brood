@@ -368,7 +368,7 @@ section.main{
   margin-bottom: 72px;
 }
 .page-name{
-  font-size: 56px;
+  font-size: 54px;
 }
 .page-balance{
   margin:42px;
@@ -376,4 +376,26 @@ section.main{
 .send{
   display:flex;
   margin-top:42px;
+}
+.send-input{
+  height: 42px;
+  background: transparent;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid grey;
+  width: 200px;
+  font-size: 15px;
+  color: white;
+}
+.send-input:focus{
+  border-bottom: 2px solid white;
+}
+.send-button{
+  height:42px;
+  width:65px;
+  margin-left:10px;
+  font-size: 15px;
+}
+.faucet-wrap{
+  margin-top:82px;
 }
