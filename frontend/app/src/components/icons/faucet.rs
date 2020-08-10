@@ -1,11 +1,10 @@
-use yew::{html, Component, ComponentLink, Properties, Callback, Html, ShouldRender};
+use yew::{html, Component, ComponentLink, Properties, Html, ShouldRender};
 
 use crate::components::icons::{loading::Loading};
 
 pub struct Faucet {
     link: ComponentLink<Self>,
     active: bool,
-    onclick: Callback<()>,
 }
 
 pub enum Msg {
@@ -15,7 +14,6 @@ pub enum Msg {
 #[derive(Properties, Clone)]
 pub struct Props {
     pub active: bool,
-    pub onclick: Callback<()>,
 }
 
 impl Component for Faucet {
@@ -26,16 +24,10 @@ impl Component for Faucet {
         Faucet {
             link,
             active: props.active,
-            onclick: props.onclick,
         }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {
-            Msg::Clicked => {
-                self.onclick.emit(());
-            }
-        }
         false
     }
 
@@ -49,8 +41,7 @@ impl Component for Faucet {
             return html!{<Loading big=false />}
         }
         html! {
-<svg class="faucet" width="28" height="28" viewBox="0 0 490 490" fill="white"
-    onclick=self.link.callback(|_| Msg::Clicked)>
+<svg class="faucet" width="28" height="28" viewBox="0 0 490 490" fill="white">
     <g>
         <path d="M469.2,95.7H354.8V41.6h28.1c11.4,0,20.8-9.4,20.8-20.8S394.3,0,382.9,0h-97.8c-11.4,0-20.8,9.4-20.8,20.8
             s9.4,20.8,20.8,20.8h28.1v54.1H90.5C40.6,95.7,0,135.2,0,184.1v158.1C0,353.6,9.4,363,20.8,363h139.4c11.4,0,20.8-8.3,20.8-19.8

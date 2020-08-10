@@ -1,6 +1,6 @@
 use yew::prelude::*;
-use crate::components::{grid::Grid, page::Page};
-use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, iota::IOTA, left::Left};
+use crate::components::{grid::Grid, page::Page, create::Create};
+use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, iota::IOTA, left::Left, plus::Plus};
 
 use crate::app::{App, Msg, Coin};
 
@@ -51,8 +51,13 @@ pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
 pub fn view_sidebar(&self) -> Html {
     html!{<section class="sidebar">
         <header class=if self.state.initted {"sidebar-head"} else {"sidebar-head hide"}>
-            <Logo />
-            <div class="title">{"BROOD WALLET"}</div>
+            <div class="sidebar-left">
+                <Logo />
+                <div class="title">{"BROOD WALLET"}</div>
+            </div>
+            <Plus active=self.state.creating 
+                onclick=self.link.callback(|_| Msg::CreateClicked)
+            />
         </header>
         <div class="sidebar-body">
             {self.view_coins()}
@@ -116,7 +121,10 @@ pub fn view_receive(&self) -> Html {
         Some(a)=> a.address.clone(),
         None=>"".to_string(),
     };
-    return html!{<div class="receive-wrap">
+    if receive_address.len()==0{
+        return html!{<div></div>};
+    }
+    html!{<div class="receive-wrap">
         <div class=if self.state.receive_active {"receive show"} else {"receive"}>
             <Left onclick=self.link.callback(|_| Msg::ReceiveClicked) />
             <div class="receive-input-wrap">
@@ -165,9 +173,15 @@ pub fn view_body(&self) -> Html {
             Some(c)=> html!{<Page
                 coin={c}
                 balance={balance}
+                reload={self.link.callback(|_| Msg::Reload)}
             />},
             None=>html!{},
         }; 
+    }
+    if self.state.creating {
+        return html!{<Create
+            reload={self.link.callback(|_| Msg::Reload)}
+        />}
     }
     html!{}
 }

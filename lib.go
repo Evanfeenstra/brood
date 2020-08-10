@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 
 	"github.com/iotaledger/goshimmer/client/wallet"
@@ -14,7 +15,7 @@ import (
 	"github.com/shibukawa/configdir"
 )
 
-func reloadWallet(url string, folder *configdir.Config) error {
+func reloadWalletFromFile(url string, folder *configdir.Config) (*wallet.Wallet, error) {
 
 	data, _ := folder.ReadFile(walletPath)
 
@@ -23,12 +24,13 @@ func reloadWallet(url string, folder *configdir.Config) error {
 	seedBytes, err := marshalUtil.ReadBytes(ed25519.SeedSize)
 	seed := walletseed.NewSeed(seedBytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	lastAddressIndex, err := marshalUtil.ReadUint64()
+	fmt.Println("lastAddressIndex", lastAddressIndex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	assetRegistry, _, err := wallet.ParseAssetRegistry(marshalUtil)
@@ -36,30 +38,40 @@ func reloadWallet(url string, folder *configdir.Config) error {
 	spentAddressesBytes := marshalUtil.ReadRemainingBytes()
 	spentAddresses := *(*[]bitmask.BitMask)(unsafe.Pointer(&spentAddressesBytes))
 
-	walletState = wallet.New(
+	walletState := wallet.New(
 		wallet.WebAPI(url),
 		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
 	)
-	return nil
+	return walletState, nil
 }
 
-func loadWallet() error {
-	// if walletState != nil {
-	// 	return nil // already loaded, good to go
-	// }
+func loadWallet() (*wallet.Wallet, error) {
+	if len(shimmerURL) == 0 {
+		return nil, errors.New("no url")
+	}
 	configDirs := configdir.New(vendorName, appName)
 	folder := configDirs.QueryFolderContainsFile(walletPath)
 	if folder == nil {
+		return nil, errors.New("no file")
+	}
+	walletState, err := reloadWalletFromFile(shimmerURL, folder)
+	if err != nil {
+		return nil, err
+	}
+	// if err := walletState.Refresh(); err != nil {
+	// 	return err
+	// }
+	return walletState, nil
+}
+
+// run this after every update to state
+func writeWalletState(walletState *wallet.Wallet) error {
+	configDirs := configdir.New(vendorName, appName)
+	folders := configDirs.QueryFolders(configdir.Global)
+	if len(folders) == 0 {
 		return errors.New("no file")
 	}
-	err := reloadWallet(shimmerURL, folder)
-
-	if err = walletState.Refresh(); err != nil {
-		return err
-	}
-
-	if err != nil {
-		return err
-	}
-	return nil
+	fmt.Println("WRITE TO", folders[0])
+	err := folders[0].WriteFile(walletPath, walletState.ExportState())
+	return err
 }

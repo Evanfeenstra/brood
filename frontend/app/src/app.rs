@@ -42,6 +42,7 @@ pub struct State {
     pub pending_balance: HashMap<String, u64>,
     pub addresses: Vec<Address>,
     pub selected_color: String,
+    pub creating: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Properties)]
@@ -71,9 +72,10 @@ pub enum Msg {
     Create,
     SeedCopied,
     AddressCopied(String),
-    Balance,
     TimeoutDone,
     CoinClicked(String),
+    Reload,
+    CreateClicked,
     Nope,
 }
 
@@ -100,6 +102,7 @@ impl Component for App {
             pending_balance: HashMap::new(),
             addresses: Vec::new(),
             selected_color: "".to_string(),
+            creating: false,
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -159,7 +162,8 @@ impl Component for App {
                 }
             }
             Msg::FetchErr(err)=> {
-                warn!("{:?}",err)
+                warn!("{:?}",err);
+                self.state.fetching = false
             }
             Msg::Create=> {
                 self.fetch_json("create", json!({
@@ -169,7 +173,8 @@ impl Component for App {
             Msg::SeedCopied=> {
                 web::coopy(self.state.seed.as_str());
                 self.state.seed = "".to_string();
-                self.state.has_wallet = true;    
+                self.state.has_wallet = true;
+                self.fetch_json("state", json!({}));  
             }
             Msg::AddressCopied(addy)=> {
                 web::coopy(addy.as_str());
@@ -180,9 +185,6 @@ impl Component for App {
             Msg::TimeoutDone=> {
                 self.state.copied = false;
             }
-            Msg::Balance=> {
-                self.fetch_json("state", json!({})); 
-            }
             Msg::SettingsClicked=> {
                 self.state.receive_active = false;
                 self.state.settings_active = !self.state.settings_active;
@@ -192,11 +194,19 @@ impl Component for App {
                 self.state.receive_active = !self.state.receive_active;
             }
             Msg::CoinClicked(color)=> {
+                self.state.creating = false;
                 if self.state.selected_color==color {
                     self.state.selected_color = "".to_string();
                 } else {
                     self.state.selected_color=color;
                 }
+            }
+            Msg::Reload=> {
+                self.fetch_json("state", json!({})); 
+            }
+            Msg::CreateClicked=> {
+                self.state.selected_color = "".to_string();
+                self.state.creating = !self.state.creating
             }
             Msg::Mint=> {
                 // let coin = Coin {

@@ -2,21 +2,19 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/iotaledger/goshimmer/client/wallet"
 	walletseed "github.com/iotaledger/goshimmer/client/wallet/packages/seed"
+	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/address"
 	"github.com/iotaledger/goshimmer/dapps/valuetransfers/packages/balance"
 	"github.com/iotaledger/hive.go/bitmask"
 
 	"github.com/mr-tron/base58"
 	"github.com/shibukawa/configdir"
 )
-
-var walletState *wallet.Wallet
 
 var shimmerURL string
 
@@ -25,19 +23,6 @@ const (
 	appName    = "brood"
 	walletPath = "wallet.dat"
 )
-
-// run this after every update to state
-func writeWalletState() error {
-	state := walletState.ExportState()
-
-	configDirs := configdir.New(vendorName, appName)
-	folders := configDirs.QueryFolders(configdir.Global)
-	if len(folders) == 0 {
-		return errors.New("no file")
-	}
-	folders[0].WriteFile(walletPath, state)
-	return nil
-}
 
 func checkWallet(w http.ResponseWriter, r *http.Request) {
 
@@ -72,12 +57,6 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 	folder := configDirs.QueryFolderContainsFile(walletPath)
 	if folder != nil { // has file
 		hasWallet = true
-		err = reloadWallet(check.URL, folder)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		fmt.Printf("wallet state: %+v\n", walletState)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -106,12 +85,12 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 	spentAddresses := []bitmask.BitMask{}
 	assetRegistry := wallet.NewAssetRegistry()
 
-	walletState = wallet.New(
+	walletState := wallet.New(
 		wallet.WebAPI(check.URL),
 		wallet.Import(seed, lastAddressIndex, spentAddresses, assetRegistry),
 	)
 
-	err = writeWalletState()
+	err = writeWalletState(walletState)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -124,7 +103,7 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 }
 
 func getState(w http.ResponseWriter, r *http.Request) {
-	err := loadWallet()
+	walletState, err := loadWallet()
 
 	confirmedBalance, pendingBalance, err := walletState.Balance()
 	if err != nil {
@@ -158,6 +137,7 @@ func getState(w http.ResponseWriter, r *http.Request) {
 
 	receiveAddy := walletState.ReceiveAddress().String()
 	for _, addr := range walletState.AddressManager().Addresses() {
+		fmt.Println("ADDY", addr.String())
 		addys = append(addys, AddressRes{
 			Address:   addr.String(),
 			Index:     addr.Index,
@@ -180,6 +160,8 @@ func getState(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	writeWalletState(walletState)
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"confirmed_balance": cb,
@@ -190,17 +172,19 @@ func getState(w http.ResponseWriter, r *http.Request) {
 }
 
 func faucet(w http.ResponseWriter, r *http.Request) {
-	err := loadWallet()
+	walletState, err := loadWallet()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	err = walletState.RequestFaucetFunds(true)
+	err = walletState.RequestFaucetFunds(false)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	writeWalletState(walletState)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]bool{
@@ -219,4 +203,106 @@ func addToCoins(coins []Coin, coin Coin) []Coin {
 		return coins
 	}
 	return append(coins, coin)
+}
+
+func send(w http.ResponseWriter, r *http.Request) {
+	walletState, err := loadWallet()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	send := Send{}
+	body, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	err = json.Unmarshal(body, &send)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	if len(send.Address) == 0 || len(send.Color) == 0 || send.Amount < 1 {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	destinationAddress, err := address.FromBase58(send.Address)
+	if err != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	var color balance.Color
+	switch send.Color {
+	case "IOTA":
+		color = balance.ColorIOTA
+	case "NEW":
+		color = balance.ColorNew
+	default:
+		colorBytes, parseErr := base58.Decode(send.Color)
+		if parseErr != nil {
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+
+		color, _, parseErr = balance.ColorFromBytes(colorBytes)
+		if parseErr != nil {
+			w.WriteHeader(http.StatusNotAcceptable)
+			return
+		}
+	}
+
+	_, err = walletState.SendFunds(
+		wallet.Destination(destinationAddress, send.Amount, color),
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	writeWalletState(walletState)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]bool{
+		"success": true,
+	})
+}
+
+func createCoin(w http.ResponseWriter, r *http.Request) {
+	walletState, err := loadWallet()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	coin := Coin{}
+	body, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	err = json.Unmarshal(body, &coin)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	if coin.Name == "" || coin.Symbol == "" || coin.Amount < 1 {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	assetColor, err := walletState.CreateAsset(wallet.Asset{
+		Name:   coin.Name,
+		Symbol: coin.Symbol,
+		Amount: coin.Amount,
+	})
+
+	writeWalletState(walletState)
+
+	coinRes := coin
+	coinRes.Color = assetColor.String()
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]Coin{
+		"coin": coinRes,
+	})
 }

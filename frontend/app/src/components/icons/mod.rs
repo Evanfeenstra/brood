@@ -5,3 +5,5 @@ pub mod wallet;
 pub mod faucet;
 pub mod iota;
 pub mod left;
+pub mod plus;
+pub mod send;

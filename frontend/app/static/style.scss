@@ -45,11 +45,24 @@ section.sidebar{
   height:$headheight;
   max-height: $headheight;
   align-items: center;
+  justify-content: space-between;
   padding-right:10px;
-  // border-bottom: 2px solid white;
   opacity: 1;
   transition: all 0.2s;
   transform: translate(0,0);
+}
+.sidebar-left{
+  display: flex;
+  align-items: center;
+}
+.plus{
+  height:30px;
+  width:30px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.plus:hover{
+  transform: scale(1.05);
 }
 .iota{
   margin:0 1px 0 15px;
@@ -214,8 +227,8 @@ section.main{
 
 
 .loading{
-  height:32px;
-  width:32px;
+  height:18px;
+  width:18px;
   animation-name: spin;
   animation-duration: 600ms;
   animation-iteration-count: infinite;
@@ -248,7 +261,7 @@ section.main{
   display: flex;
   align-items: center;
   padding-left: 15px;
-  padding-top: 8px;
+  padding-top: 1px;
 }
 .receive.show{
   transform:translateX(0px);
@@ -277,6 +290,7 @@ section.main{
   min-width: 63px;
   font-size: 12px;
   user-select: none;
+  margin-top:5px;
 }
 .receive-copy.copied{
   background:white;
@@ -286,9 +300,10 @@ section.main{
 .receive-label{
   font-size:10px;
   margin-left: 2px;
+  user-select: none;
 }
 .receive-input-wrap{
-  margin-top:-3px;
+  margin-top:3px;
 }
 .receive-addy{
   height: 24px;
@@ -305,10 +320,9 @@ section.main{
 }
 
 .faucet{
-  width:24px;
-  height:24px;
+  width:18px;
+  height:18px;
   flex-shrink: 0;
-  margin-left: 16px;
   cursor: pointer;
   transform: scale(-1, 1);
   transition: transform 0.1s;
@@ -316,7 +330,14 @@ section.main{
 .faucet:hover{
   transform: scale(-1.05, 1.05);
 }
-
+.faucet-button{
+  height: 35px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+.faucet-button span{
+  margin-left: 15px;
+}
 .coins{
   width:100%;
 }
@@ -390,12 +411,98 @@ section.main{
 .send-input:focus{
   border-bottom: 2px solid white;
 }
+.send-icon{
+  width: 18px;
+  height: 18px;
+  fill:white;
+}
+.send-button[disabled] .send-icon{
+  fill:grey;
+}
+.send-button span{
+  margin-left:6px;
+}
+.amount-input{
+  height: 42px;
+  background: transparent;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid grey;
+  width: 58px;
+  font-size: 15px;
+  color: white;
+  margin-left:10px;
+}
+.amount-input:focus{
+  border-bottom: 2px solid white;
+}
 .send-button{
   height:42px;
-  width:65px;
+  width:90px;
   margin-left:10px;
   font-size: 15px;
 }
 .faucet-wrap{
   margin-top:82px;
+}
+.show-seed{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.seed-button{
+  height:37px;
+  width:133px;
+  margin-top:24px;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+.create-name{
+  font-size: 42px;
+}
+
+
+.create-inputs{
+  display: flex;
+  flex-direction: column;
+  margin-top:42px;
+}
+.create-input{
+  height: 42px;
+  background: transparent;
+  outline: none;
+  border: none;
+  border-bottom: 1px solid grey;
+  width: 200px;
+  font-size: 15px;
+  color: white;
+  margin-bottom: 8px;
+}
+.create-input:focus{
+  border-bottom: 2px solid white;
+}
+.create-button{
+  width:200px;
+  height: 39px;
+  margin-top: 42px;
+  font-size: 16px;
+}
+
+.create-button svg{
+  fill:white;
+  height:18px;
+  width:18px;
+  margin-right:8px;
+}
+.create-button[disabled] svg{
+  fill:grey;
 }

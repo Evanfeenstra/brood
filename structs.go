@@ -3,6 +3,11 @@ package main
 type Check struct {
 	URL string `json:"url"`
 }
+type Send struct {
+	Address string `json:"address"`
+	Color   string `json:"color"`
+	Amount  uint64 `json:"amount"`
+}
 type InfoReq struct {
 	Version    string `json:"version"`
 	Synced     bool   `json:"synced"`
@@ -26,4 +31,5 @@ type Coin struct {
 	Color  string `json:"color"`
 	Name   string `json:"name"`
 	Symbol string `json:"symbol"`
+	Amount uint64 `json:"amount"`
 }
