@@ -28,6 +28,7 @@ struct State {
 pub struct Props {
     pub coin: Coin,
     pub balance: u64,
+    pub pending: u64,
     pub reload: Callback<()>,
 }
 
@@ -124,6 +125,7 @@ impl Component for Page {
                     {"Balance:  "}
                     {&self.props.balance}
                 </div>
+                {self.view_pending()}
                 {self.view_send()}
                 {self.view_faucet()}
             </div>
@@ -133,6 +135,16 @@ impl Component for Page {
 
 // views
 impl Page {
+
+pub fn view_pending(&self) -> Html {
+    if self.props.pending==0 {
+        return html!{}
+    }
+    html!{<div class="pending">
+        {"Pending:  "}
+        {&self.props.pending}
+    </div>}
+}
 
 pub fn view_send(&self) -> Html {
     html! {<div class="send">

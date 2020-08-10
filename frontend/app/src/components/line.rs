@@ -21,9 +21,7 @@ impl Component for Line {
     type Properties = Props;
 
     fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Line {
-            props,
-        }
+        Line {props}
     }
 
     fn update(&mut self, _: Self::Message) -> ShouldRender {

@@ -1,12 +1,14 @@
 
 ### frontend
 
-export DEV=true
+`export RUSTFLAGS=--cfg=web_sys_unstable_apis`
 
-export RUSTFLAGS=--cfg=web_sys_unstable_apis
-
-npm run start:dev
+`npm run start:dev`
 
 ### server
 
-./brood
+`export DEV=true`
+
+`go build`
+
+`./brood`

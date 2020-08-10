@@ -164,13 +164,11 @@ impl Grid {
     }
     fn init(&mut self) {
         let window = web_sys::window().unwrap();
-        let jwidth = window.inner_width().unwrap().as_f64();
-        self.state.width = match jwidth {
+        self.state.width = match window.inner_width().unwrap().as_f64() {
             Some(jwidth) => jwidth as i16,
             _ => 0,
         };
-        let jheight = window.inner_height().unwrap().as_f64();
-        self.state.height = match jheight {
+        self.state.height = match window.inner_height().unwrap().as_f64() {
             Some(jheight) => jheight as i16,
             _ => 0,
         };
@@ -186,14 +184,13 @@ impl Grid {
             (2,2),
             (2,56),
         ];
-        let total = self.points.iter().enumerate().fold(0, |sum, (i,p):(usize, &(i16,i16))| {
+        self.state.total = self.points.iter().enumerate().fold(0, |sum, (i,p):(usize, &(i16,i16))| {
             let mut next = p; // so no len
             if i<self.points.len()-1 {
                 next = &self.points[i+1];
             }
             return sum + self.calc_length(p.0,p.1,next.0,next.1);
         });
-        self.state.total = total;
         self.render_gl();
     }
     fn calc_length(&self, x1:i16, y1:i16, x2:i16, y2:i16) ->i16 {

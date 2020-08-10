@@ -218,6 +218,7 @@ section.main{
 .button[disabled]{
   border:1px solid grey;
   color:grey;
+  cursor: default;
 }
 
 .create-button{
@@ -428,7 +429,7 @@ section.main{
   outline: none;
   border: none;
   border-bottom: 1px solid grey;
-  width: 58px;
+  width: 81px;
   font-size: 15px;
   color: white;
   margin-left:10px;
@@ -468,6 +469,7 @@ input[type=number] {
 
 .create-name{
   font-size: 42px;
+  user-select: none;
 }
 
 
@@ -490,10 +492,15 @@ input[type=number] {
 .create-input:focus{
   border-bottom: 2px solid white;
 }
+.create-button-wrap{
+  display: flex;
+  width: 200px;
+  justify-content: center;
+}
 .create-button{
-  width:200px;
+  width:120px;
   height: 39px;
-  margin-top: 42px;
+  margin: 52px 0;
   font-size: 16px;
 }
 

@@ -108,8 +108,9 @@ impl Component for Create {
     fn view(&self) -> Html {
         html! {
             <div class="create">
-                <div class="create-name">{"CREATE NEW COIN"}</div>
+                <div class="create-name">{"NEW COIN"}</div>
                 {self.view_inputs()}
+                {self.view_button()}
             </div>
         }
     }
@@ -117,6 +118,18 @@ impl Component for Create {
 
 // views
 impl Create {
+
+pub fn view_button(&self) -> Html {
+    html!{<div class="create-button-wrap">
+        <button class="create-button button"
+            disabled=self.state.name.len()==0 || self.state.symbol.len()==0 || self.state.amount.len()==0>
+            <Plus active=false
+                onclick=self.link.callback(|_| Msg::Nope)
+            />
+            {"CREATE"}
+        </button>
+    </div>}
+}
 
 pub fn view_inputs(&self) -> Html {
     html! {<div class="create-inputs">
@@ -135,13 +148,6 @@ pub fn view_inputs(&self) -> Html {
             value=&self.state.amount
             oninput=self.link.callback(|e: InputData| Msg::UpdateAmount(e.value))
         />
-        <button class="create-button button"
-            disabled=self.state.name.len()==0 || self.state.symbol.len()==0 || self.state.amount.len()==0>
-            <Plus active=false
-                onclick=self.link.callback(|_| Msg::Nope)
-            />
-            {"CREATE COIN"}
-        </button>
     </div>}
 }
 

@@ -49,15 +49,21 @@ pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
 }
 
 pub fn view_sidebar(&self) -> Html {
+    let view_plus = || {
+        if self.state.synced {
+            return html!{<Plus active=self.state.creating 
+                onclick=self.link.callback(|_| Msg::CreateClicked)
+            />}
+        }
+        html!{}
+    };
     html!{<section class="sidebar">
         <header class=if self.state.initted {"sidebar-head"} else {"sidebar-head hide"}>
             <div class="sidebar-left">
                 <Logo />
                 <div class="title">{"BROOD WALLET"}</div>
             </div>
-            <Plus active=self.state.creating 
-                onclick=self.link.callback(|_| Msg::CreateClicked)
-            />
+            {view_plus()}
         </header>
         <div class="sidebar-body">
             {self.view_coins()}
@@ -167,12 +173,18 @@ pub fn view_body(&self) -> Html {
         }
     }
     if self.state.selected_color.len()>0 {
-        let balance = self.state.confirmed_balance[&self.state.selected_color];
+        let balance = match self.state.confirmed_balance.get(&self.state.selected_color) {
+            Some(n)=>n, None=>&0u64
+        };
+        let pending = match self.state.pending_balance.get(&self.state.selected_color) {
+            Some(n)=>n, None=>&0u64
+        };
         let coin = self.state.coins.iter().find(|&c| c.color==self.state.selected_color );
         return match coin {
             Some(c)=> html!{<Page
                 coin={c}
                 balance={balance}
+                pending={pending}
                 reload={self.link.callback(|_| Msg::Reload)}
             />},
             None=>html!{},
@@ -191,7 +203,7 @@ pub fn view_url_input(&self) -> Html {
         <section class="content-center">
             <div class="url-input-wrap">
                 <input class="url-input"
-                    placeholder="Enter your Shimmer URL"
+                    placeholder="Shimmer URL"
                     value=&self.state.url_input_value
                     oninput=self.link.callback(|e: InputData| Msg::UpdateURL(e.value))
                     onkeypress=self.link.callback(|e: KeyboardEvent| {

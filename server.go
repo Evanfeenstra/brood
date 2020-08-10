@@ -56,8 +56,8 @@ func initChi(isDev bool) *chi.Mux {
 	if isDev { // dev comes from port 8000
 		cors := cors.New(cors.Options{
 			AllowedOrigins:   []string{"http://localhost:8000"},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "X-User", "authorization"},
+			AllowedMethods:   []string{"POST", "OPTIONS"},
+			AllowedHeaders:   []string{"Accept", "Content-Type"},
 			AllowCredentials: true,
 			MaxAge:           300, // Maximum value not ignored by any of major browsers
 			Debug:            false,

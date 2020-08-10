@@ -8,6 +8,12 @@ type Send struct {
 	Color   string `json:"color"`
 	Amount  uint64 `json:"amount"`
 }
+type Coin struct {
+	Color  string `json:"color"`
+	Name   string `json:"name"`
+	Symbol string `json:"symbol"`
+	Amount uint64 `json:"amount"`
+}
 type InfoReq struct {
 	Version    string `json:"version"`
 	Synced     bool   `json:"synced"`
@@ -26,10 +32,3 @@ type AddressRes struct {
 	IsReceive bool   `json:"is_receive"`
 }
 type BalanceRes map[string]uint64
-
-type Coin struct {
-	Color  string `json:"color"`
-	Name   string `json:"name"`
-	Symbol string `json:"symbol"`
-	Amount uint64 `json:"amount"`
-}
