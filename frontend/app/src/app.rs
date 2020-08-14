@@ -61,7 +61,6 @@ pub struct Address {
 }
 
 pub enum Msg {
-    Mint,
     ShowIcon,
     UpdateURL(String),
     EnterURL,
@@ -76,6 +75,7 @@ pub enum Msg {
     CoinClicked(String),
     Reload,
     CreateClicked,
+    CoinCreated(Coin,u64),
     Nope,
 }
 
@@ -208,18 +208,13 @@ impl Component for App {
                 self.state.selected_color = "".to_string();
                 self.state.creating = !self.state.creating
             }
-            Msg::Mint=> {
-                // let coin = Coin {
-                //     description: self.state.value.clone(),
-                //     completed: false,
-                //     editing: false,
-                // };
-                // self.state.coins.push(coin);
+            Msg::CoinCreated(coin,balance)=>{
+                self.state.coins.push(coin);
             }
             Msg::Nope=> {}
         }
         self.storage.store(KEY, Json(&self.state.shimmer_url));
-        info!("{:?}",self.state);
+        // info!("{:?}",self.state);
         true
     }
 

@@ -28,6 +28,7 @@ struct State {
 #[derive(Properties, Clone)]
 pub struct Props {
     pub reload: Callback<()>,
+    pub created: Callback<(Coin,u64)>,
 }
 
 pub enum Msg {
@@ -72,16 +73,16 @@ impl Component for Create {
             }
             Msg::FetchDone(path, data)=> {
                 self.parse_json_response(path, data);
-                if path=="coin"  {
-                    self.state.creating = false;
-                    self.props.reload.emit(());
-                }
             }
             Msg::FetchErr(err, path)=> {
                 warn!("{:?}",err);
-                self.state.creating = false
+                self.state.creating = false;
+                self.state.amount = "".to_string();
+                self.state.symbol = "".to_string();
+                self.state.name = "".to_string();
             }
             Msg::CreateClicked=> {
+                info!("{:?}", "create clicked");
                 if self.state.creating {
                     return false
                 }
@@ -122,8 +123,9 @@ impl Create {
 pub fn view_button(&self) -> Html {
     html!{<div class="create-button-wrap">
         <button class="create-button button"
+            onclick=self.link.callback(|_| Msg::CreateClicked)
             disabled=self.state.name.len()==0 || self.state.symbol.len()==0 || self.state.amount.len()==0>
-            <Plus active=false
+            <Plus loading=self.state.creating active=false
                 onclick=self.link.callback(|_| Msg::Nope)
             />
             {"CREATE"}
@@ -189,8 +191,15 @@ pub fn fetch_json(&mut self, path:&'static str, body: Value) {
 pub fn parse_json_response(&mut self, path:&'static str, r:String){
     match path {
         "coin"=>{
+            let amt = match self.state.amount.parse::<u64>() {
+                Ok(n)=> n,
+                Err(_e)=> 0,
+            };
             let json: Result<CreateRes,Error> = from_str(r.as_str());
-            info!("faucet successful: {:?}", json);
+            json.map(|data| {
+                self.props.created.emit((data.coin, amt));
+            }).ok();
+            self.state.creating = false;
         }
         &_=>()
     }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/iotaledger/goshimmer/client/wallet"
@@ -28,7 +27,7 @@ func reloadWalletFromFile(url string, folder *configdir.Config) (*wallet.Wallet,
 	}
 
 	lastAddressIndex, err := marshalUtil.ReadUint64()
-	fmt.Println("lastAddressIndex", lastAddressIndex)
+	// fmt.Println("lastAddressIndex", lastAddressIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +70,7 @@ func writeWalletState(walletState *wallet.Wallet) error {
 	if len(folders) == 0 {
 		return errors.New("no file")
 	}
-	fmt.Println("WRITE TO", folders[0])
+	// fmt.Println("WRITE TO", folders[0])
 	err := folders[0].WriteFile(walletPath, walletState.ExportState())
 	return err
 }

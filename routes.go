@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
+	"strings"
 
 	"github.com/iotaledger/goshimmer/client/wallet"
 	walletseed "github.com/iotaledger/goshimmer/client/wallet/packages/seed"
@@ -37,18 +39,12 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 	}
 	shimmerURL = check.URL
 
-	req, err := http.Get(check.URL + "/info")
+	emptyState := wallet.New(
+		wallet.WebAPI(check.URL),
+	)
+	info, err := emptyState.ServerStatus()
 	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
-		return
-	}
-	defer req.Body.Close()
-
-	info := InfoReq{}
-	res, err := ioutil.ReadAll(req.Body)
-	err = json.Unmarshal(res, &info)
-	if err != nil {
-		w.WriteHeader(http.StatusNotAcceptable)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
@@ -58,10 +54,11 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 	if folder != nil { // has file
 		hasWallet = true
 	}
+	fmt.Println(folder)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(InfoRes{
-		IdentityID: info.IdentityID,
+		IdentityID: info.ID,
 		Synced:     info.Synced,
 		Version:    info.Version,
 		HasWallet:  hasWallet,
@@ -137,7 +134,6 @@ func getState(w http.ResponseWriter, r *http.Request) {
 
 	receiveAddy := walletState.ReceiveAddress().String()
 	for _, addr := range walletState.AddressManager().Addresses() {
-		fmt.Println("ADDY", addr.String())
 		addys = append(addys, AddressRes{
 			Address:   addr.String(),
 			Index:     addr.Index,
@@ -159,6 +155,9 @@ func getState(w http.ResponseWriter, r *http.Request) {
 			Symbol: walletState.AssetRegistry().Symbol(colorIOTA),
 		})
 	}
+	sort.Slice(coins, func(i, j int) bool {
+		return coins[i].Name == "IOTA" || strings.Compare(coins[i].Name, coins[j].Name) < 0
+	})
 
 	writeWalletState(walletState)
 

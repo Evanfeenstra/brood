@@ -22,6 +22,10 @@ struct State {
     amount: String,
     fetching_faucet: bool,
     sending: bool,
+    name: String,
+    color: String,
+    balance: u64,
+    pending: u64,
 }
 
 #[derive(Properties, Clone)]
@@ -47,7 +51,12 @@ impl Component for Page {
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let initialProps = props.clone();
         let state = State{
+            name: initialProps.coin.name,
+            color: initialProps.coin.color,
+            balance: initialProps.balance,
+            pending: initialProps.pending,
             addy: "".to_string(),
             amount: "".to_string(),
             fetching_faucet: false,
@@ -113,17 +122,21 @@ impl Component for Page {
         true
     }
 
-    fn change(&mut self, _: Self::Properties) -> ShouldRender {
-        false
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        self.state.name = props.coin.name;
+        self.state.color = props.coin.color;
+        self.state.balance = props.balance;
+        self.state.pending = props.pending;
+        true
     }
 
     fn view(&self) -> Html {
         html! {
             <div class="page">
-                <div class="page-name">{&self.props.coin.name}</div>
+                <div class="page-name">{&self.state.name}</div>
                 <div class="page-balance">
                     {"Balance:  "}
-                    {&self.props.balance}
+                    {&self.state.balance}
                 </div>
                 {self.view_pending()}
                 {self.view_send()}
@@ -142,7 +155,7 @@ pub fn view_pending(&self) -> Html {
     }
     html!{<div class="pending">
         {"Pending:  "}
-        {&self.props.pending}
+        {&self.state.pending}
     </div>}
 }
 
@@ -170,7 +183,7 @@ pub fn view_send(&self) -> Html {
 }
 
 pub fn view_faucet(&self) -> Html {
-    if self.props.coin.color!="IOTA" {
+    if self.state.color!="IOTA" {
         return html!{<div></div>}
     }
     return html!{<div class="faucet-wrap">

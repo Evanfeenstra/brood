@@ -1,4 +1,5 @@
 use yew::prelude::*;
+use log::{info};
 use crate::components::{grid::Grid, page::Page, create::Create};
 use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, iota::IOTA, left::Left, plus::Plus};
 
@@ -28,7 +29,12 @@ pub fn view_coins(&self) -> Html {
 
 pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
     let color = coin.color.clone();
-    let balance = self.state.confirmed_balance[&color];
+    let balance = match self.state.confirmed_balance.get(&coin.color) {
+        Some(n)=>n, None=>&0u64
+    };
+    let pending = match self.state.pending_balance.get(&coin.color) {
+        Some(n)=>n, None=>&0u64
+    };
     let is_selected = self.state.selected_color==color;
     let view_logo = || {
         if coin.color.clone()=="IOTA" {
@@ -51,7 +57,7 @@ pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
 pub fn view_sidebar(&self) -> Html {
     let view_plus = || {
         if self.state.synced {
-            return html!{<Plus active=self.state.creating 
+            return html!{<Plus active=self.state.creating loading=false
                 onclick=self.link.callback(|_| Msg::CreateClicked)
             />}
         }
@@ -157,7 +163,7 @@ pub fn view_body(&self) -> Html {
                 <p>{"Create your wallet!"}</p>
                 <button class="button create-button"
                     onclick=self.link.callback(|_| Msg::Create)
-                >{"CREATE NOW"}</button>
+                >{"CREATE"}</button>
             </div>
         }
     }
@@ -180,6 +186,7 @@ pub fn view_body(&self) -> Html {
             Some(n)=>n, None=>&0u64
         };
         let coin = self.state.coins.iter().find(|&c| c.color==self.state.selected_color );
+        // info!("{:?}",coin);
         return match coin {
             Some(c)=> html!{<Page
                 coin={c}
@@ -193,6 +200,7 @@ pub fn view_body(&self) -> Html {
     if self.state.creating {
         return html!{<Create
             reload={self.link.callback(|_| Msg::Reload)}
+            created={self.link.callback(|args:(Coin,u64)| Msg::CoinCreated(args.0,args.1))}
         />}
     }
     html!{}
