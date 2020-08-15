@@ -11,6 +11,8 @@ use crate::app::{Coin};
 use crate::components::icons::{faucet::Faucet, send::Send};
 use crate::utils::valid;
 
+const IOTA_COLOR: &str = "IOTA";
+
 pub struct Page {
     link: ComponentLink<Self>,
     state: State,
@@ -137,10 +139,15 @@ impl Component for Page {
 
     fn view(&self) -> Html {
         html! {
-            <div class="page" color="IOTA">
+            <div class="page" color=self.state.color>
                 <div class="page-name">{&self.state.name}</div>
+                <div class="page-color" 
+                    display=if self.state.color==IOTA_COLOR {"none"} else {""}>
+                    <span>{"Color: "}</span>
+                    <span>{&self.state.color}</span>
+                </div>
                 <div class="page-balance">
-                    {"Balance:  "}
+                    {"Balance: "}
                     {&self.state.balance}
                 </div>
                 {self.view_pending()}
@@ -188,7 +195,7 @@ pub fn view_send(&self) -> Html {
 }
 
 pub fn view_faucet(&self) -> Html {
-    if self.state.color!="IOTA" {
+    if self.state.color!=IOTA_COLOR {
         return html!{<div></div>}
     }
     return html!{<div class="faucet-wrap">

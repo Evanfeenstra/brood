@@ -9,12 +9,12 @@ $mainwidth: calc(100vw - 280px);
   user-select: none;
 }
 *[visibility="hidden"] {
-  visibility: hidden;
-  user-select: none;
+  visibility: hidden !important;
+  user-select: none !important;
 }
 *[display="none"] {
-  display: none;
-  user-select: none;
+  display: none !important;
+  user-select: none !important;
 }
 html,body,main.wrapper{
   display:flex;
@@ -189,6 +189,7 @@ section.main{
   position: absolute;
   right: 0;
   top: 11px;
+  z-index: 99;
 }
 .node-info > div{
   margin-right:20px;
@@ -282,6 +283,8 @@ section.main{
   width:362px;
   min-width: 362px;
   overflow: hidden;
+  z-index: 100;
+  position: relative;
 }
 .receive{
   width:362px;
@@ -424,10 +427,10 @@ section.main{
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2.9rem;
+  margin-bottom: 2.2rem;
 }
 .page[color="IOTA"]{
-  margin-bottom: 1.3rem;
+  margin-bottom: 1.2rem;
 }
 .page-name{
   font-size: 54px;
@@ -438,6 +441,24 @@ section.main{
 }
 .page-pending{
   font-size: 16px;
+}
+.page-color{
+  font-size: 12px;
+  visibility: hidden;
+  height:32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.page-name:hover + .page-color {
+  visibility: visible;
+}
+.page-color:hover{
+  visibility: visible;
+}
+.page-color span:last-child{
+  user-select: text;
+  margin-left:5px;
 }
 .send{
   display:flex;
