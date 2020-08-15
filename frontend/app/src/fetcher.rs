@@ -75,6 +75,7 @@ impl App {
                     self.state.identity_id = data.identity_id;
                     self.state.has_wallet = data.has_wallet;
                 }).ok();
+                self.state.changing_url = false;
             }
             "create"=>{
                 let json: Result<CreateRes,Error> = from_str(r.as_str());

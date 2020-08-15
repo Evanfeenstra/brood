@@ -1,16 +1,20 @@
 use yew::prelude::*;
-use log::{info};
 use crate::components::{grid::Grid, page::Page, create::Create};
-use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, iota::IOTA, left::Left, plus::Plus};
+use crate::components::icons::{logo::Logo, gear::Gear, loading::Loading, wallet::Wallet, iota::IOTA, left::Left, plus::Plus, edit::Edit};
 
 use crate::app::{App, Msg, Coin};
 
+const IOTA_COLOR: &str = "IOTA";
+
 impl App {
 
+// pending in ()
+// interval to update balances (after some actions, faster interval for a bit)
+// 3 3 3 9 9 9 27 27 27 81...
 pub fn view_app(&self) -> Html {
     html! {
         <main class="wrapper">
-            <Grid done=self.link.callback(|_| Msg::ShowIcon) />
+            <Grid done=self.link.callback(|_| Msg::ShowLogo) />
             <div class="app">
                 {self.view_sidebar()}
                 {self.view_content()}
@@ -37,7 +41,7 @@ pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
     };
     let is_selected = self.state.selected_color==color;
     let view_logo = || {
-        if coin.color.clone()=="IOTA" {
+        if coin.color.clone()==IOTA_COLOR {
             return html!{<IOTA />}
         }
         html!{}
@@ -81,9 +85,9 @@ pub fn view_content(&self) -> Html {
     if !self.state.initted {
         return html! {}
     }
-    if self.state.fetching {
+    if self.state.checking && !self.state.settings_active {
         return html!{<section class="content-center">
-            <Loading big={true} />
+            <Loading size="" />
         </section>}
     }
     if self.state.shimmer_url.len()==0 {
@@ -102,27 +106,62 @@ pub fn view_content(&self) -> Html {
     }
 }
 
+pub fn view_settings(&self) -> Html {
+    if !self.state.settings_active {
+        return html!{}
+    }
+    let view_url_button_content = || {
+        if !self.state.checking {
+            return html!{"OK"}
+        }
+        return html!{<Loading size="small" />}
+    };
+    html!{<>
+        <div>{&self.state.identity_id}</div>
+        <div>{&self.state.version}</div>
+        <aside class="set-url">
+            <div class="settings-url-wrap">
+                <button class="button settings-url-button"
+                    visibility=if !self.state.changing_url {"hidden"} else {""}
+                    disabled=self.state.url_input_value.len()==0
+                    onclick=self.link.callback(|_| Msg::EnterChangedURL)
+                >
+                    {view_url_button_content()}
+                </button>
+                <div class="small-url">
+                    <input class="settings-url-input"
+                        visibility=if !self.state.changing_url {"hidden"} else {""}
+                        placeholder="Shimmer URL"
+                        value=&self.state.url_input_value
+                        oninput=self.link.callback(|e: InputData| Msg::UpdateURL(e.value))
+                        onkeypress=self.link.callback(|e: KeyboardEvent| {
+                            if e.key() == "Enter" { Msg::EnterChangedURL } else { Msg::Nope }
+                        })
+                    />
+                    <span visibility=if self.state.changing_url {"hidden"} else {""}>
+                        {&self.state.shimmer_url}
+                    </span>
+                </div>
+            </div>
+            <Edit active=self.state.changing_url 
+                onclick=self.link.callback(|_| Msg::PencilClicked)
+            />
+        </aside>
+    </>}
+}
+
 pub fn view_info(&self) -> Html {
     let mut synced_text = "NOT SYNCED";
     if self.state.synced {
         synced_text = "SYNCED";
     }
-    let view_settings = || {
-        if self.state.settings_active {
-            return html!{<>
-                <div>{&self.state.version}</div>
-                <div>{&self.state.identity_id}</div>
-            </>}
-        }
-        html!{}
-    };
     html!{
         <div class="node-info">
-            {view_settings()}
-            <div class="synced">{synced_text}</div>
             <Gear active=self.state.settings_active 
                 onclick=self.link.callback(|_| Msg::SettingsClicked)
             />
+            <div class="synced">{synced_text}</div>
+            {self.view_settings()}
         </div>
     }
 }
@@ -198,9 +237,13 @@ pub fn view_body(&self) -> Html {
         }; 
     }
     if self.state.creating {
+        let iota_balance = match self.state.confirmed_balance.get(IOTA_COLOR) {
+            Some(n)=>n, None=>&0u64
+        };
         return html!{<Create
             reload={self.link.callback(|_| Msg::Reload)}
             created={self.link.callback(|args:(Coin,u64)| Msg::CoinCreated(args.0,args.1))}
+            iota_balance=iota_balance
         />}
     }
     html!{}

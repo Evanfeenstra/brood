@@ -57,7 +57,7 @@ impl Component for Plus {
             }
         }
         if self.loading {
-            return html!{<Loading big=false />}
+            return html!{<Loading size="" />}
         }
         html! {
             <svg onclick=self.link.callback(|_| Msg::Clicked) class="plus" fill="#FFFFFF" viewBox="0 0 1024 1024">

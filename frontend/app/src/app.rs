@@ -11,6 +11,7 @@ use yew::services::{
 };
 use std::collections::HashMap;
 use crate::utils::web;
+use crate::utils::valid;
 
 const KEY: &str = "brood.shimmer_url";
 
@@ -21,6 +22,8 @@ pub struct App {
     pub fetcher: Option<FetchTask>,
     pub timeout: Option<Box<dyn Task>>,
     pub timeout_callback: Callback<()>,
+    pub interval: Option<Box<dyn Task>>,
+    pub interval_callback: Callback<()>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -29,7 +32,7 @@ pub struct State {
     pub initted: bool,
     pub shimmer_url: String,
     pub url_input_value: String,
-    pub fetching: bool,
+    pub checking: bool,
     pub synced: bool,
     pub version: String,
     pub seed: String,
@@ -43,6 +46,8 @@ pub struct State {
     pub addresses: Vec<Address>,
     pub selected_color: String,
     pub creating: bool,
+    pub changing_url: bool,
+    pub interval_secs: u8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Properties)]
@@ -61,9 +66,10 @@ pub struct Address {
 }
 
 pub enum Msg {
-    ShowIcon,
+    ShowLogo,
     UpdateURL(String),
     EnterURL,
+    EnterChangedURL,
     FetchDone(&'static str, String),
     FetchErr(anyhow::Error),
     SettingsClicked,
@@ -72,10 +78,12 @@ pub enum Msg {
     SeedCopied,
     AddressCopied(String),
     TimeoutDone,
+    Interval,
     CoinClicked(String),
     Reload,
     CreateClicked,
     CoinCreated(Coin,u64),
+    PencilClicked,
     Nope,
 }
 
@@ -89,7 +97,7 @@ impl Component for App {
             initted: false,
             coins: Vec::new(),
             url_input_value: "".to_string(),
-            fetching: false,
+            checking: true,
             synced: false,
             version: "".to_string(),
             seed: "".to_string(),
@@ -103,6 +111,8 @@ impl Component for App {
             addresses: Vec::new(),
             selected_color: "".to_string(),
             creating: false,
+            changing_url: true,
+            interval_secs: 9,
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -118,12 +128,19 @@ impl Component for App {
             fetcher: None,
             timeout: None,
             timeout_callback: link.callback(|_| Msg::TimeoutDone),
+            interval: None,
+            interval_callback: link.callback(|_| Msg::Interval),
         };
         if app.state.shimmer_url.len()>0 {
             app.fetch_json("check", json!({
                 "url": app.state.shimmer_url
             }));
         }
+        let handle = TimeoutService::spawn(
+            Duration::from_secs(app.state.interval_secs as u64), 
+            app.interval_callback.clone()
+        );
+        app.interval = Some(Box::new(handle));
         app
     }
 
@@ -137,24 +154,49 @@ impl Component for App {
                 self.state.url_input_value = val;
             }
             Msg::EnterURL=> {
-                let mut val = self.state.url_input_value.clone();
-                if val.chars().last()==Some('/') {
-                    val.pop();
+                if self.state.checking {
+                    return false;
                 }
-                info!("url: {:?}",val);
+                let val = valid::process_ip(self.state.url_input_value.clone());
+                // info!("url: {:?}",val);
                 self.state.shimmer_url = val;
                 self.state.url_input_value = "".to_string();
                 
-                self.state.fetching = true;
+                self.state.checking = true;
                 self.fetch_json("check", json!({
                     "url": self.state.shimmer_url
-                }));   
+                }));
             }
-            Msg::ShowIcon=> {
+            Msg::EnterChangedURL=> {
+                if self.state.checking {
+                    return false;
+                }
+                let val = valid::process_ip(self.state.url_input_value.clone());
+                self.state.shimmer_url = val;
+
+                self.state.synced = false;
+                self.state.version = "".to_string();
+                self.state.identity_id = "".to_string();
+
+                self.state.checking = true;
+                self.fetch_json("check", json!({
+                    "url": self.state.shimmer_url
+                }));
+            }
+            Msg::PencilClicked=> {
+                if !self.state.changing_url {
+                    self.state.url_input_value = self.state.shimmer_url.clone();
+                } else {
+                    self.state.url_input_value = "".to_string();
+                }
+                self.state.changing_url = !self.state.changing_url;
+                
+            }
+            Msg::ShowLogo=> {
                 self.state.initted = true;
             }
             Msg::FetchDone(path, data)=> {
-                self.state.fetching = false;
+                self.state.checking = false;
                 self.parse_json_response(path, data);
                 // wallet is there! load data               // reload balance
                 if path=="check" && self.state.has_wallet {
@@ -163,7 +205,7 @@ impl Component for App {
             }
             Msg::FetchErr(err)=> {
                 warn!("{:?}",err);
-                self.state.fetching = false
+                self.state.checking = false
             }
             Msg::Create=> {
                 self.fetch_json("create", json!({
@@ -185,8 +227,21 @@ impl Component for App {
             Msg::TimeoutDone=> {
                 self.state.copied = false;
             }
+            Msg::Interval=> {
+                info!("interval: {:?}",self.state.interval_secs);
+                let n:f64 = self.state.interval_secs as f64 * 1.4;
+                if n<81.0 {
+                    self.state.interval_secs = n as u8;
+                }
+                let handle = TimeoutService::spawn(
+                    Duration::from_secs(self.state.interval_secs as u64), // drop the demical
+                    self.interval_callback.clone()
+                );
+                self.interval = Some(Box::new(handle));
+            }
             Msg::SettingsClicked=> {
                 self.state.receive_active = false;
+                self.state.changing_url = false;
                 self.state.settings_active = !self.state.settings_active;
             }
             Msg::ReceiveClicked=> {
@@ -223,3 +278,11 @@ impl Component for App {
     }
 }
 
+// impl App {
+//   fn do_interval(&self) {
+//     let do_i = self.link.callback(Msg::Interval;
+//     let handle = TimeoutService::spawn(Duration::from_secs(3), do_i);
+//     // A reference to the new handle must be retained for the next render to run.
+//     self.interval = Some(Box::new(handle));
+//   }
+// }

@@ -10,6 +10,7 @@ use yew::format::{Text};
 use anyhow::{anyhow};
 use crate::app::{Coin};
 use crate::components::icons::{plus::Plus};
+use crate::utils::valid;
 
 pub struct Create {
     link: ComponentLink<Self>,
@@ -29,6 +30,7 @@ struct State {
 pub struct Props {
     pub reload: Callback<()>,
     pub created: Callback<(Coin,u64)>,
+    pub iota_balance: u64,
 }
 
 pub enum Msg {
@@ -63,13 +65,19 @@ impl Component for Create {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::UpdateName(val) => {
-                self.state.name = val;
+                if val.len() < 50 {
+                    self.state.name = val;
+                }
             }
             Msg::UpdateSymbol(val) => {
-                self.state.symbol = val;
+                if val.len() < 20 {
+                    self.state.symbol = val;
+                }
             }
             Msg::UpdateAmount(val) => {
-                self.state.amount = val;
+                if valid::amount_input(&val, self.props.iota_balance) {
+                    self.state.amount = val;
+                }
             }
             Msg::FetchDone(path, data)=> {
                 self.parse_json_response(path, data);

@@ -38,7 +38,7 @@ impl Component for Faucet {
 
     fn view(&self) -> Html {
         if self.active {
-            return html!{<Loading big=false />}
+            return html!{<Loading size="" />}
         }
         html! {
 <svg class="faucet" width="28" height="28" viewBox="0 0 490 490" fill="white">

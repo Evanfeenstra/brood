@@ -10,6 +10,8 @@ use yew::format::{Text};
 use anyhow::{anyhow};
 use crate::app::{Coin};
 use crate::components::icons::{faucet::Faucet, send::Send};
+use crate::utils::valid;
+
 pub struct Page {
     link: ComponentLink<Self>,
     state: State,
@@ -73,10 +75,14 @@ impl Component for Page {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::UpdateAddy(val) => {
-                self.state.addy = val;
+                if valid::address(&val) {
+                    self.state.addy = val;
+                }
             }
             Msg::UpdateAmount(val) => {
-                self.state.amount = val;
+                if valid::amount_input(&val, self.state.balance) {
+                    self.state.amount = val;
+                }
             }
             Msg::EnterAddy=> {
                 if self.state.sending {
@@ -132,7 +138,7 @@ impl Component for Page {
 
     fn view(&self) -> Html {
         html! {
-            <div class="page">
+            <div class="page" color="IOTA">
                 <div class="page-name">{&self.state.name}</div>
                 <div class="page-balance">
                     {"Balance:  "}
@@ -173,7 +179,7 @@ pub fn view_send(&self) -> Html {
             oninput=self.link.callback(|e: InputData| Msg::UpdateAmount(e.value))
         />
         <button class="button send-button"
-            disabled=self.state.addy.len()==0 || self.state.amount.len()==0
+            disabled=self.state.addy.len()!=44 || self.state.amount.len()==0
             onclick=self.link.callback(|_| Msg::EnterAddy)
         >
             <Send active={self.state.sending} />

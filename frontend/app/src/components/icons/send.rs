@@ -38,7 +38,7 @@ impl Component for Send {
 
     fn view(&self) -> Html {
         if self.active {
-            return html!{<Loading big=false />}
+            return html!{<Loading size="" />}
         }
         html! {
 <svg class="send-icon" width="28" height="28" viewBox="0 0 1024 1024">

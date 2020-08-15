@@ -7,3 +7,4 @@ pub mod iota;
 pub mod left;
 pub mod plus;
 pub mod send;
+pub mod edit;
