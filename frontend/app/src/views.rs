@@ -8,9 +8,6 @@ const IOTA_COLOR: &str = "IOTA";
 
 impl App {
 
-// pending in ()
-// interval to update balances (after some actions, faster interval for a bit)
-// 3 3 3 9 9 9 27 27 27 81...
 pub fn view_app(&self) -> Html {
     html! {
         <main class="wrapper">
@@ -53,7 +50,16 @@ pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
                 {view_logo()}
                 <div class="coin-name">{&coin.name}</div>
             </div>
-            <div class="coin-balance">{balance}</div>
+            <div class="coin-balances">
+                <div class="coin-balance"
+                    display=if (balance==&0 && pending>&0) {"none"} else {""}>
+                    {balance}
+                </div>
+                <div class="coin-balance-pending"
+                    display=if pending==&0 {"none"} else {""}>
+                    {"("}{pending}{")"}
+                </div>
+            </div>
         </div>
     }
 }

@@ -1,11 +1,10 @@
-use log::{info,warn};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{json};
 use std::time::Duration;
 use yew::format::Json;
 use yew::prelude::*;
 use yew::services::{
-    Task, TimeoutService,
+    Task, TimeoutService, IntervalService,
     storage::{Area, StorageService},
     fetch::{FetchTask},
 };
@@ -47,7 +46,8 @@ pub struct State {
     pub selected_color: String,
     pub creating: bool,
     pub changing_url: bool,
-    pub interval_secs: u8,
+    pub interval_counter: u8,
+    pub interval_level: u8,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Properties)]
@@ -112,7 +112,8 @@ impl Component for App {
             selected_color: "".to_string(),
             creating: false,
             changing_url: true,
-            interval_secs: 9,
+            interval_counter: 0,
+            interval_level: 3,
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -136,8 +137,8 @@ impl Component for App {
                 "url": app.state.shimmer_url
             }));
         }
-        let handle = TimeoutService::spawn(
-            Duration::from_secs(app.state.interval_secs as u64), 
+        let handle = IntervalService::spawn(
+            Duration::from_secs(1), // drop the demical
             app.interval_callback.clone()
         );
         app.interval = Some(Box::new(handle));
@@ -204,7 +205,7 @@ impl Component for App {
                 }
             }
             Msg::FetchErr(err)=> {
-                warn!("{:?}",err);
+                log::warn!("{:?}",err);
                 self.state.checking = false
             }
             Msg::Create=> {
@@ -228,16 +229,18 @@ impl Component for App {
                 self.state.copied = false;
             }
             Msg::Interval=> {
-                info!("interval: {:?}",self.state.interval_secs);
-                let n:f64 = self.state.interval_secs as f64 * 1.4;
-                if n<81.0 {
-                    self.state.interval_secs = n as u8;
+                if self.state.interval_level<3 {
+                    self.state.interval_level=3;
+                };
+                self.state.interval_counter = self.state.interval_counter+1;
+                if self.state.interval_counter >= self.state.interval_level {
+                    let n:f64 = self.state.interval_level as f64 * 1.4;
+                    if n<32.0 {
+                        self.state.interval_level = n as u8;
+                    }
+                    self.state.interval_counter = 0;
+                    self.fetch_json("state", json!({}));
                 }
-                let handle = TimeoutService::spawn(
-                    Duration::from_secs(self.state.interval_secs as u64), // drop the demical
-                    self.interval_callback.clone()
-                );
-                self.interval = Some(Box::new(handle));
             }
             Msg::SettingsClicked=> {
                 self.state.receive_active = false;
@@ -257,7 +260,8 @@ impl Component for App {
                 }
             }
             Msg::Reload=> {
-                self.fetch_json("state", json!({})); 
+                self.state.interval_level = 3;
+                self.state.interval_counter = 0;
             }
             Msg::CreateClicked=> {
                 self.state.selected_color = "".to_string();
@@ -265,6 +269,8 @@ impl Component for App {
             }
             Msg::CoinCreated(coin,balance)=>{
                 self.state.coins.push(coin);
+                self.state.interval_level = 3;
+                self.state.interval_counter = 0;
             }
             Msg::Nope=> {}
         }
@@ -277,12 +283,3 @@ impl Component for App {
         self.view_app()
     }
 }
-
-// impl App {
-//   fn do_interval(&self) {
-//     let do_i = self.link.callback(Msg::Interval;
-//     let handle = TimeoutService::spawn(Duration::from_secs(3), do_i);
-//     // A reference to the new handle must be retained for the next render to run.
-//     self.interval = Some(Box::new(handle));
-//   }
-// }

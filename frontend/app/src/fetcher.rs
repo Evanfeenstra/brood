@@ -1,4 +1,3 @@
-use log::{info};
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{
     value::Value,
@@ -52,7 +51,6 @@ impl App {
                         Err(e)=> Msg::FetchErr(e),
                     }
                 } else {
-                    info!("error: {:?}",meta.status);
                     Msg::FetchErr(anyhow!("cant fetch"))
                 }
             },
@@ -95,7 +93,7 @@ impl App {
             }
             "faucet"=>{
                 let json: Result<FaucetRes,Error> = from_str(r.as_str());
-                info!("faucet successful: {:?}", json);
+                // info!("faucet successful: {:?}", json);
             }
             &_=>()
         }

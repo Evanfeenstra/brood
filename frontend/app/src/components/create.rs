@@ -1,5 +1,4 @@
 use yew::prelude::*;
-use log::{info, warn};
 use serde_json::{value::Value, error::Error, from_str, json};
 use yew::format::Json;
 use yew::services::{
@@ -83,14 +82,14 @@ impl Component for Create {
                 self.parse_json_response(path, data);
             }
             Msg::FetchErr(err, path)=> {
-                warn!("{:?}",err);
+                log::warn!("{:?}",err);
                 self.state.creating = false;
                 self.state.amount = "".to_string();
                 self.state.symbol = "".to_string();
                 self.state.name = "".to_string();
             }
             Msg::CreateClicked=> {
-                info!("{:?}", "create clicked");
+                // info!("{:?}", "create clicked");
                 if self.state.creating {
                     return false
                 }
@@ -183,7 +182,6 @@ pub fn fetch_json(&mut self, path:&'static str, body: Value) {
                     Err(e)=> Msg::FetchErr(e, path.to_string()),
                 }
             } else {
-                info!("error: {:?}",meta.status);
                 Msg::FetchErr(anyhow!("cant fetch"), path.to_string())
             }
         },

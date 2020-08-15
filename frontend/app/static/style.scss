@@ -12,6 +12,10 @@ $mainwidth: calc(100vw - 280px);
   visibility: hidden;
   user-select: none;
 }
+*[display="none"] {
+  display: none;
+  user-select: none;
+}
 html,body,main.wrapper{
   display:flex;
   flex:1;
@@ -181,6 +185,10 @@ section.main{
   position: relative;
   font-size: 0.8rem;
   width:300px;
+  min-width: 300px;
+  position: absolute;
+  right: 0;
+  top: 11px;
 }
 .node-info > div{
   margin-right:20px;
@@ -272,6 +280,7 @@ section.main{
 
 .receive-wrap{
   width:362px;
+  min-width: 362px;
   overflow: hidden;
 }
 .receive{
@@ -385,10 +394,19 @@ section.main{
 .coin-name{
   margin:0 13px;
 }
+.coin-balances{
+  display: flex;
+  align-items: center;
+  font-size:13px;
+  margin-right:20px;
+}
 .coin-balance{
-  margin:0 21px;
   font-size:13px;
 }
+.coin-balance-pending{
+  margin-left:5px;
+}
+
 
 .back-arrow{
   height:28px;
@@ -417,6 +435,9 @@ section.main{
 }
 .page-balance{
   margin:42px 0 22px 0;
+}
+.page-pending{
+  font-size: 16px;
 }
 .send{
   display:flex;
