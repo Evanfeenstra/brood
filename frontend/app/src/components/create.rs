@@ -64,12 +64,12 @@ impl Component for Create {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::UpdateName(val) => {
-                if val.len() < 50 {
+                if val.len() < 42 {
                     self.state.name = val;
                 }
             }
             Msg::UpdateSymbol(val) => {
-                if val.len() < 20 {
+                if val.len() < 18 {
                     self.state.symbol = val;
                 }
             }
@@ -81,7 +81,7 @@ impl Component for Create {
             Msg::FetchDone(path, data)=> {
                 self.parse_json_response(path, data);
             }
-            Msg::FetchErr(err, path)=> {
+            Msg::FetchErr(err, _path)=> {
                 log::warn!("{:?}",err);
                 self.state.creating = false;
                 self.state.amount = "".to_string();

@@ -39,6 +39,12 @@ pub struct StateRes {
 pub struct FaucetRes {
     success: bool,
 }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ClipboardRes {
+    cmd: String,
+    text: String,
+    meta: String,
+}
 
 impl App {
     pub fn fetch_json(&mut self, path:&'static str, body: Value) {
@@ -91,9 +97,13 @@ impl App {
                     self.state.addresses = data.addresses;
                 }).ok();
             }
-            "faucet"=>{
-                let json: Result<FaucetRes,Error> = from_str(r.as_str());
-                // info!("faucet successful: {:?}", json);
+            "clipboard"=>{
+                let json: Result<ClipboardRes,Error> = from_str(r.as_str());
+                json.map(|data| {
+                    if data.meta == "url_input_value" && data.cmd=="paste" {
+                        self.state.url_input_value = data.text;
+                    }
+                }).ok();
             }
             &_=>()
         }

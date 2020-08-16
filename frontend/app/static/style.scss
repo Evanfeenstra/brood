@@ -7,6 +7,13 @@ $mainwidth: calc(100vw - 280px);
 *{
   box-sizing: border-box;
   user-select: none;
+  -webkit-user-select: none;
+  cursor:default;
+}
+input {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
 }
 *[visibility="hidden"] {
   visibility: hidden !important;
@@ -333,7 +340,6 @@ section.main{
 .receive-label{
   font-size:10px;
   margin-left: 2px;
-  user-select: none;
 }
 .receive-input-wrap{
   margin-top:3px;
@@ -396,15 +402,23 @@ section.main{
 }
 .coin-name{
   margin:0 13px;
+  max-width: 200px;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 .coin-balances{
   display: flex;
   align-items: center;
   font-size:13px;
   margin-right:20px;
+  position: relative;
+  height:14px;
 }
 .coin-balance{
   font-size:13px;
+  position: absolute;
+  right:0;
+  top:0;
 }
 .coin-balance-pending{
   margin-left:5px;
@@ -427,14 +441,17 @@ section.main{
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 2.2rem;
+  margin-bottom: 2rem;
 }
 .page[color="IOTA"]{
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
 }
 .page-name{
   font-size: 54px;
   text-align: center;
+  max-width: 580px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .page-balance{
   margin:42px 0 22px 0;
@@ -449,6 +466,7 @@ section.main{
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  position: relative;
 }
 .page-name:hover + .page-color {
   visibility: visible;
@@ -457,9 +475,15 @@ section.main{
   visibility: visible;
 }
 .page-color span:last-child{
-  user-select: text;
   margin-left:5px;
 }
+.page-symbol{
+  position: absolute;
+  top: -96px;
+  font-size: 18px;
+  font-weight: bolder;
+}
+
 .send{
   display:flex;
   margin-top:62px;

@@ -27,8 +27,10 @@ struct State {
     sending: bool,
     name: String,
     color: String,
+    symbol: String,
     balance: u64,
     pending: u64,
+    meta_key_down: bool,
 }
 
 #[derive(Properties, Clone)]
@@ -46,6 +48,7 @@ pub enum Msg {
     FetchDone(&'static str, String),
     FetchErr(anyhow::Error, String),
     FaucetClicked,
+    InputKeyEvent(String,String,String),
     Nope,
 }
 
@@ -54,16 +57,18 @@ impl Component for Page {
     type Properties = Props;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let initialProps = props.clone();
+        let initial_props = props.clone();
         let state = State{
-            name: initialProps.coin.name,
-            color: initialProps.coin.color,
-            balance: initialProps.balance,
-            pending: initialProps.pending,
+            name: initial_props.coin.name,
+            color: initial_props.coin.color,
+            symbol: initial_props.coin.symbol,
+            balance: initial_props.balance,
+            pending: initial_props.pending,
             addy: "".to_string(),
             amount: "".to_string(),
             fetching_faucet: false,
             sending: false,
+            meta_key_down: false,
         };
         Page {
             link,
@@ -124,6 +129,27 @@ impl Component for Page {
                 self.state.fetching_faucet = true;
                 self.fetch_json("faucet", json!({}));
             }
+            Msg::InputKeyEvent(direction,key,field)=> {
+                if key == "Meta" || key == "Control" {
+                    self.state.meta_key_down = direction=="down";
+                }
+                if self.state.meta_key_down {
+                    if key=="c" || key=="x" {
+                        self.fetch_json("clipboard", json!({
+                            "cmd": "copy",
+                            "text": self.state.addy,
+                            "meta": field,
+                        }));
+                    }
+                    if key=="v" {
+                        self.fetch_json("clipboard", json!({
+                            "cmd": "paste",
+                            "text": self.state.addy,
+                            "meta": field,
+                        }));
+                    }
+                }
+            }
             Msg::Nope=> {}
         }
         true
@@ -132,6 +158,7 @@ impl Component for Page {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         self.state.name = props.coin.name;
         self.state.color = props.coin.color;
+        self.state.symbol = props.coin.symbol;
         self.state.balance = props.balance;
         self.state.pending = props.pending;
         true
@@ -141,9 +168,10 @@ impl Component for Page {
         html! {
             <div class="page" color=self.state.color>
                 <div class="page-name">{&self.state.name}</div>
-                <div class="page-color" 
+                <div class="page-color"
                     display=if self.state.color==IOTA_COLOR {"none"} else {""}>
-                    <span>{"Color: "}</span>
+                    <div class="page-symbol">{&self.state.symbol}</div>
+                    <b>{"Color: "}</b>
                     <span>{&self.state.color}</span>
                 </div>
                 <div class="page-balance">
@@ -177,6 +205,11 @@ pub fn view_send(&self) -> Html {
             placeholder="Send to Address"
             value=&self.state.addy
             oninput=self.link.callback(|e: InputData| Msg::UpdateAddy(e.value))
+            onkeyup=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("up".to_string(),e.key(),"addy".to_string()))
+            onkeydown=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("down".to_string(),e.key(),"addy".to_string()))
+            oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+            oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+            onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
         />
         <input class="amount-input"
             type="number"
@@ -220,6 +253,12 @@ pub struct FaucetRes {
 pub struct SendRes {
     success: bool,
 }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ClipboardRes {
+    cmd: String,
+    text: String,
+    meta: String,
+}
 
 impl Page {
 
@@ -248,12 +287,20 @@ pub fn fetch_json(&mut self, path:&'static str, body: Value) {
 pub fn parse_json_response(&mut self, path:&'static str, r:String){
     match path {
         "faucet"=>{
-            let json: Result<FaucetRes,Error> = from_str(r.as_str());
+            // let json: Result<FaucetRes,Error> = from_str(r.as_str());
             // info!("faucet successful: {:?}", json);
         }
         "send"=>{
-            let json: Result<SendRes,Error> = from_str(r.as_str());
+            // let json: Result<SendRes,Error> = from_str(r.as_str());
             // info!("send successful: {:?}", json);
+        }
+        "clipboard"=>{
+            let json: Result<ClipboardRes,Error> = from_str(r.as_str());
+            json.map(|data| {
+                if data.meta == "addy" && data.cmd=="paste" {
+                    self.state.addy = data.text;
+                }
+            }).ok();
         }
         &_=>()
     }

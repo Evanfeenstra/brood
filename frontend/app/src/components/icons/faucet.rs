@@ -3,7 +3,6 @@ use yew::{html, Component, ComponentLink, Properties, Html, ShouldRender};
 use crate::components::icons::{loading::Loading};
 
 pub struct Faucet {
-    link: ComponentLink<Self>,
     active: bool,
 }
 
@@ -20,14 +19,13 @@ impl Component for Faucet {
     type Message = Msg;
     type Properties = Props;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
         Faucet {
-            link,
             active: props.active,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
         false
     }
 

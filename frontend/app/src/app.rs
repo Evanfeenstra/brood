@@ -9,7 +9,6 @@ use yew::services::{
     fetch::{FetchTask},
 };
 use std::collections::HashMap;
-use crate::utils::web;
 use crate::utils::valid;
 
 const KEY: &str = "brood.shimmer_url";
@@ -48,6 +47,7 @@ pub struct State {
     pub changing_url: bool,
     pub interval_counter: u8,
     pub interval_level: u8,
+    pub meta_key_down: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Properties)]
@@ -84,6 +84,7 @@ pub enum Msg {
     CreateClicked,
     CoinCreated(Coin,u64),
     PencilClicked,
+    InputKeyEvent(String,String,String),
     Nope,
 }
 
@@ -114,6 +115,7 @@ impl Component for App {
             changing_url: true,
             interval_counter: 0,
             interval_level: 3,
+            meta_key_down: false,
             shimmer_url: {
                 if let Json(Ok(persisted)) = storage.restore(KEY) {
                     persisted
@@ -214,13 +216,21 @@ impl Component for App {
                 })); 
             }
             Msg::SeedCopied=> {
-                web::coopy(self.state.seed.as_str());
+                self.fetch_json("clipboard", json!({
+                    "cmd": "copy",
+                    "text": self.state.seed,
+                    "meta": "seed",
+                }));
                 self.state.seed = "".to_string();
                 self.state.has_wallet = true;
                 self.fetch_json("state", json!({}));  
             }
             Msg::AddressCopied(addy)=> {
-                web::coopy(addy.as_str());
+                self.fetch_json("clipboard", json!({
+                    "cmd": "copy",
+                    "text": addy,
+                    "meta": "addy",
+                }));
                 self.state.copied = true;
                 let handle = TimeoutService::spawn(Duration::from_secs(3), self.timeout_callback.clone());
                 self.timeout = Some(Box::new(handle));
@@ -267,10 +277,31 @@ impl Component for App {
                 self.state.selected_color = "".to_string();
                 self.state.creating = !self.state.creating
             }
-            Msg::CoinCreated(coin,balance)=>{
+            Msg::CoinCreated(coin,_balance)=>{
                 self.state.coins.push(coin);
                 self.state.interval_level = 3;
                 self.state.interval_counter = 0;
+            }
+            Msg::InputKeyEvent(direction,key,field)=> {
+                if key == "Meta" || key == "Control" {
+                    self.state.meta_key_down = direction=="down";
+                }
+                if self.state.meta_key_down {
+                    if key=="c" || key=="x" {
+                        self.fetch_json("clipboard", json!({
+                            "cmd": "copy",
+                            "text": self.state.url_input_value,
+                            "meta": field,
+                        }));
+                    }
+                    if key=="v" {
+                        self.fetch_json("clipboard", json!({
+                            "cmd": "paste",
+                            "text": self.state.url_input_value,
+                            "meta": field,
+                        }));
+                    }
+                }
             }
             Msg::Nope=> {}
         }

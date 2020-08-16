@@ -6,6 +6,13 @@ use crate::app::{App, Msg, Coin};
 
 const IOTA_COLOR: &str = "IOTA";
 
+/*
+paste is broken in WebView
+https://github.com/webview/webview/issues/403
+
+edit unregistered coin
+*/
+
 impl App {
 
 pub fn view_app(&self) -> Html {
@@ -129,7 +136,7 @@ pub fn view_settings(&self) -> Html {
             <div class="settings-url-wrap">
                 <button class="button settings-url-button"
                     visibility=if !self.state.changing_url {"hidden"} else {""}
-                    disabled=self.state.url_input_value.len()==0
+                    // disabled=self.state.url_input_value.len()==0
                     onclick=self.link.callback(|_| Msg::EnterChangedURL)
                 >
                     {view_url_button_content()}
@@ -143,6 +150,11 @@ pub fn view_settings(&self) -> Html {
                         onkeypress=self.link.callback(|e: KeyboardEvent| {
                             if e.key() == "Enter" { Msg::EnterChangedURL } else { Msg::Nope }
                         })
+                        onkeyup=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("up".to_string(),e.key(),"url_input_value".to_string()))
+                        onkeydown=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("down".to_string(),e.key(),"url_input_value".to_string()))
+                        oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                        oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                        onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
                     />
                     <span visibility=if self.state.changing_url {"hidden"} else {""}>
                         {&self.state.shimmer_url}
@@ -266,6 +278,11 @@ pub fn view_url_input(&self) -> Html {
                     onkeypress=self.link.callback(|e: KeyboardEvent| {
                         if e.key() == "Enter" { Msg::EnterURL } else { Msg::Nope }
                     })
+                    onkeyup=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("up".to_string(),e.key(),"url_input_value".to_string()))
+                    onkeydown=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("down".to_string(),e.key(),"url_input_value".to_string()))
+                    oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                    oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                    onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
                 />
                 <button class="button url-input-button"
                     disabled=self.state.url_input_value.len()==0
