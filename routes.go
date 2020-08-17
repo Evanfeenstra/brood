@@ -156,9 +156,11 @@ func getState(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	sort.Slice(coins, func(i, j int) bool {
-		return coins[i].Name == "IOTA" || strings.Compare(coins[i].Name, coins[j].Name) < 0
+		return strings.Compare(coins[i].Name, coins[j].Name) < 0
 	})
-
+	sort.Slice(coins, func(i, j int) bool {
+		return coins[i].Name == "IOTA"
+	})
 	writeWalletState(walletState)
 
 	w.WriteHeader(http.StatusOK)
@@ -201,7 +203,15 @@ func addToCoins(coins []Coin, coin Coin) []Coin {
 	if alreadyHas {
 		return coins
 	}
-	return append(coins, coin)
+	coinName := coin.Name
+	if coin.Name != "IOTA" && coin.Name == coin.Color {
+		coinName = "••••••" // unregistered asset
+	}
+	return append(coins, Coin{
+		Name:   coinName,
+		Color:  coin.Color,
+		Symbol: coin.Symbol,
+	})
 }
 
 func send(w http.ResponseWriter, r *http.Request) {
@@ -303,5 +313,44 @@ func createCoin(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]Coin{
 		"coin": coinRes,
+	})
+}
+
+func registerCoin(w http.ResponseWriter, r *http.Request) {
+	walletState, err := loadWallet()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	coin := Coin{}
+	body, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	err = json.Unmarshal(body, &coin)
+	if err != nil {
+		fmt.Println(err)
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	if coin.Color == "" || coin.Name == "" || coin.Symbol == "" || coin.Amount != 0 {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	colorBytes, parseErr := base58.Decode(coin.Color)
+	if parseErr != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+
+	color, _, parseErr := balance.ColorFromBytes(colorBytes)
+	if parseErr != nil {
+		w.WriteHeader(http.StatusNotAcceptable)
+		return
+	}
+	walletState.AssetRegistry().RegisterAsset(color, wallet.Asset{
+		Name:   coin.Name,
+		Symbol: coin.Symbol,
+		Amount: coin.Amount,
 	})
 }

@@ -293,6 +293,9 @@ impl Component for App {
                             "text": self.state.url_input_value,
                             "meta": field,
                         }));
+                        if key=="x" {
+                            self.state.url_input_value="".to_string();
+                        }
                     }
                     if key=="v" {
                         self.fetch_json("clipboard", json!({

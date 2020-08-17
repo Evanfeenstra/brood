@@ -74,13 +74,18 @@ section.sidebar{
   display: flex;
   align-items: center;
 }
-.plus{
+.plus-icon{
   height:30px;
   width:30px;
   cursor: pointer;
   transition: transform 0.1s;
 }
-.plus:hover{
+.plus-icon svg{
+  height:30px;
+  width:30px;
+  pointer-events: none;
+}
+.plus-icon:hover{
   transform: scale(1.05);
 }
 .iota{
@@ -218,15 +223,20 @@ section.main{
 }
 
 
-.gear{
+.gear-icon{
   height:29px;
   width:29px;
   margin-right: 18px;
   cursor: pointer;
   transition: transform 0.1s;
 }
-.gear:hover{
+.gear-icon:hover{
   transform: scale(1.05);
+}
+.gear-icon svg{
+  height:29px;
+  width:29px;
+  pointer-events: none;
 }
 
 
@@ -318,6 +328,11 @@ section.main{
 }
 .wallet:hover{
   transform: scale(1.05);
+}
+.wallet svg{
+  height: 32px;
+  width: 32px;
+  pointer-events: none;
 }
 .wallet.hide-wallet{
   opacity: 0;
@@ -435,6 +450,11 @@ section.main{
 }
 .back-arrow:hover{
   transform: scale(1.1, 1.1);
+}
+.back-arrow svg{
+  height:28px;
+  width:28px;
+  pointer-events: none;
 }
 
 .page{
@@ -596,12 +616,15 @@ input[type=number] {
   font-size: 16px;
   line-height: 17px;
 }
-
+.create-button .plus-icon{
+  height:18px;
+  width:18px;
+  margin-right:8px;
+}
 .create-button svg{
   fill:white;
   height:18px;
   width:18px;
-  margin-right:8px;
 }
 .create-button[disabled] svg{
   fill:grey;
@@ -618,7 +641,11 @@ input[type=number] {
 .edit-icon:hover{
   transform: scale(1.1);
 }
-
+.edit-icon svg{
+  height: 23px;
+  width: 23px;
+  pointer-events: none;
+}
 
 .settings-url-wrap{
   display: flex;

@@ -102,7 +102,7 @@ impl Component for Page {
                 self.fetch_json("send", json!({
                     "address": self.state.addy,
                     "amount": amt,
-                    "color": self.props.coin.color,
+                    "color": self.state.color,
                 }));
             }
             Msg::FetchDone(path, data)=> {
@@ -298,7 +298,9 @@ pub fn parse_json_response(&mut self, path:&'static str, r:String){
             let json: Result<ClipboardRes,Error> = from_str(r.as_str());
             json.map(|data| {
                 if data.meta == "addy" && data.cmd=="paste" {
-                    self.state.addy = data.text;
+                    if valid::address(&data.text) {
+                        self.state.addy = data.text;
+                    }
                 }
             }).ok();
         }

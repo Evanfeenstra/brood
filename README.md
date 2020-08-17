@@ -1,7 +1,5 @@
 
-### frontend
-
-export RUSTFLAGS=--cfg=web_sys_unstable_apis
+### frontend/app
 
 npm run start:dev
 

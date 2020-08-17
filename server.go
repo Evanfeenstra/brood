@@ -35,6 +35,7 @@ func srv(port string, isDev bool) *http.Server {
 		r.Post("/faucet", faucet)
 		r.Post("/send", send)
 		r.Post("/coin", createCoin)
+		r.Post("/clipboard", doClipboard)
 	})
 
 	server := &http.Server{Addr: ":" + port, Handler: r}
