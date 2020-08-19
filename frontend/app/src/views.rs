@@ -7,10 +7,8 @@ use crate::app::{App, Msg, Coin};
 const IOTA_COLOR: &str = "IOTA";
 
 /*
-paste is broken in WebView
-https://github.com/webview/webview/issues/403
-
-edit unregistered coin
+buttons active no pointer
+init setup. show 0 iota if no wallet?
 */
 
 impl App {
@@ -259,7 +257,6 @@ pub fn view_body(&self) -> Html {
             Some(n)=>n, None=>&0u64
         };
         return html!{<Create
-            reload={self.link.callback(|_| Msg::Reload)}
             created={self.link.callback(|args:(Coin,u64)| Msg::CoinCreated(args.0,args.1))}
             iota_balance=iota_balance
         />}

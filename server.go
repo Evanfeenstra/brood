@@ -9,6 +9,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
+
+	"github.com/Evanfeenstra/brood/frontend"
 )
 
 func srv(port string, isDev bool) *http.Server {
@@ -20,12 +22,12 @@ func srv(port string, isDev bool) *http.Server {
 			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode("INDEX")
 		})
-		// r.Group(func(r chi.Router) {
-		// 	r.Get("/", frontend.IndexRoute)
-		// 	r.Get("/static/*", frontend.StaticRoute)
-		// 	r.Get("/manifest.json", frontend.ManifestRoute)
-		// 	r.Get("/favicon.ico", frontend.FaviconRoute)
-		// })
+		r.Group(func(r chi.Router) {
+			r.Get("/", frontend.IndexRoute)
+			r.Get("/static/*", frontend.StaticRoute)
+			r.Get("/manifest.json", frontend.ManifestRoute)
+			r.Get("/favicon.ico", frontend.FaviconRoute)
+		})
 	}
 
 	r.Group(func(r chi.Router) {
@@ -35,6 +37,7 @@ func srv(port string, isDev bool) *http.Server {
 		r.Post("/faucet", faucet)
 		r.Post("/send", send)
 		r.Post("/coin", createCoin)
+		r.Post("/register", registerCoin)
 		r.Post("/clipboard", doClipboard)
 	})
 

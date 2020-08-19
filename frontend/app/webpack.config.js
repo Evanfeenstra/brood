@@ -14,8 +14,8 @@ module.exports = (env, argv) => {
     entry: './bootstrap.js',
     output: {
       path: distPath,
-      filename: "main.js",
-      webassemblyModuleFilename: "main.wasm"
+      filename: "static/main.js",
+      webassemblyModuleFilename: "static/main.wasm"
     },
     module: {
       rules: [

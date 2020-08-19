@@ -98,7 +98,7 @@ impl Component for App {
             initted: false,
             coins: Vec::new(),
             url_input_value: "".to_string(),
-            checking: true,
+            checking: false,
             synced: false,
             version: "".to_string(),
             seed: "".to_string(),
@@ -239,6 +239,9 @@ impl Component for App {
                 self.state.copied = false;
             }
             Msg::Interval=> {
+                if !self.state.synced {
+                    return false;
+                }
                 if self.state.interval_level<3 {
                     self.state.interval_level=3;
                 };
@@ -281,6 +284,7 @@ impl Component for App {
                 self.state.coins.push(coin);
                 self.state.interval_level = 3;
                 self.state.interval_counter = 0;
+                self.state.creating = false;
             }
             Msg::InputKeyEvent(direction,key,field)=> {
                 if key == "Meta" || key == "Control" {

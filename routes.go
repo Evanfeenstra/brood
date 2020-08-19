@@ -101,6 +101,10 @@ func createWallet(w http.ResponseWriter, r *http.Request) {
 
 func getState(w http.ResponseWriter, r *http.Request) {
 	walletState, err := loadWallet()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	confirmedBalance, pendingBalance, err := walletState.Balance()
 	if err != nil {
@@ -349,8 +353,16 @@ func registerCoin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	walletState.AssetRegistry().RegisterAsset(color, wallet.Asset{
+		Color:  color,
 		Name:   coin.Name,
 		Symbol: coin.Symbol,
-		Amount: coin.Amount,
+	})
+	fmt.Println("registered!")
+
+	writeWalletState(walletState)
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]Coin{
+		"coin": coin,
 	})
 }

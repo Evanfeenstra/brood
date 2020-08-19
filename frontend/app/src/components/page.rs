@@ -8,10 +8,12 @@ use serde_derive::{Deserialize, Serialize};
 use yew::format::{Text};
 use anyhow::{anyhow};
 use crate::app::{Coin};
-use crate::components::icons::{faucet::Faucet, send::Send};
+use crate::components::icons::{faucet::Faucet, send::Send, edit::Edit};
 use crate::utils::valid;
 
 const IOTA_COLOR: &str = "IOTA";
+const EMPTY_NAME: &str = "••••••";
+const EMPTY_SYMBOL: &str = "cI";
 
 pub struct Page {
     link: ComponentLink<Self>,
@@ -31,6 +33,10 @@ struct State {
     balance: u64,
     pending: u64,
     meta_key_down: bool,
+    editing: bool,
+    edit_name: String,
+    edit_symbol: String,
+    registering: bool,
 }
 
 #[derive(Properties, Clone)]
@@ -49,6 +55,10 @@ pub enum Msg {
     FetchErr(anyhow::Error, String),
     FaucetClicked,
     InputKeyEvent(String,String,String),
+    PencilClicked,
+    UpdateName(String),
+    UpdateSymbol(String),
+    EditCoin,
     Nope,
 }
 
@@ -69,6 +79,10 @@ impl Component for Page {
             fetching_faucet: false,
             sending: false,
             meta_key_down: false,
+            editing: false,
+            edit_name: "".to_string(),
+            edit_symbol: "".to_string(),
+            registering: false,
         };
         Page {
             link,
@@ -106,21 +120,37 @@ impl Component for Page {
                 }));
             }
             Msg::FetchDone(path, data)=> {
-                self.parse_json_response(path, data);
                 if path=="faucet"  {
                     self.state.fetching_faucet = false;
-                    self.props.reload.emit(());
                 }
                 if path=="send" {
                     self.state.sending = false;
-                    self.props.reload.emit(());
                     self.state.amount = "".to_string();
                     self.state.addy = "".to_string();
                 }
+                if path=="clipboard" {
+                    let json: Result<ClipboardRes,Error> = from_str(data.as_str());
+                    json.map(|data| {
+                        if data.meta == "addy" && data.cmd=="paste" {
+                            if valid::address(&data.text) {
+                                self.state.addy = data.text;
+                            }
+                        }
+                    }).ok();
+                }
+                if path=="register" {
+                    self.state.editing = false;
+                    self.state.registering = false;
+                }
+                self.props.reload.emit(());
             }
             Msg::FetchErr(err, path)=> {
                 log::warn!("{:?}",err);
-                self.handle_error(path)
+                match path.as_str() {
+                    "faucet"=> self.state.fetching_faucet = false,
+                    "send"=> self.state.sending = false,
+                    &_=>()
+                }
             }
             Msg::FaucetClicked=> {
                 if self.state.fetching_faucet {
@@ -150,12 +180,42 @@ impl Component for Page {
                     }
                 }
             }
+            Msg::PencilClicked=>{
+                if self.state.editing {
+                    self.state.edit_name = "".to_string();
+                    self.state.edit_symbol = "".to_string();
+                }
+                self.state.editing = !self.state.editing;
+            }
+            Msg::UpdateName(val) => {
+                if val.len() < 42 {
+                    self.state.edit_name = val;
+                }
+            }
+            Msg::UpdateSymbol(val)=> {
+                if val.len() < 18 {
+                    self.state.edit_symbol = val;
+                }
+            }
+            Msg::EditCoin=> {
+                self.state.registering = true;
+                self.fetch_json("register", json!({
+                    "color": self.state.color,
+                    "name": self.state.edit_name,
+                    "symbol": self.state.edit_symbol,
+                }));
+            }
             Msg::Nope=> {}
         }
         true
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        if self.state.color != props.coin.color {
+            self.state.editing = false;
+            self.state.edit_name = "".to_string();
+            self.state.edit_symbol = "".to_string();
+        }
         self.state.name = props.coin.name;
         self.state.color = props.coin.color;
         self.state.symbol = props.coin.symbol;
@@ -165,12 +225,27 @@ impl Component for Page {
     }
 
     fn view(&self) -> Html {
+        if self.state.editing {
+            return self.view_edit();
+        };
         html! {
             <div class="page" color=self.state.color>
-                <div class="page-name">{&self.state.name}</div>
+                <div class="page-name-wrap">
+                    <div class="page-name">
+                        {&self.state.name}
+                    </div>
+                    <div class="page-edit"
+                        visibility=if self.state.name!=EMPTY_NAME {"hidden"} else {""}>
+                        <Edit active=self.state.editing 
+                            onclick=self.link.callback(|_| Msg::PencilClicked)
+                        />
+                    </div>
+                </div>
                 <div class="page-color"
                     display=if self.state.color==IOTA_COLOR {"none"} else {""}>
-                    <div class="page-symbol">{&self.state.symbol}</div>
+                    <div class="page-symbol" visibility=if self.state.symbol==EMPTY_SYMBOL {"hidden"} else {""}>
+                        {&self.state.symbol}
+                    </div>
                     <b>{"Color: "}</b>
                     <span>{&self.state.color}</span>
                 </div>
@@ -231,12 +306,41 @@ pub fn view_faucet(&self) -> Html {
     if self.state.color!=IOTA_COLOR {
         return html!{<div></div>}
     }
-    return html!{<div class="faucet-wrap">
+    html!{<div class="faucet-wrap">
         <button class="button faucet-button"
             onclick=self.link.callback(|_| Msg::FaucetClicked)>
             <Faucet active={self.state.fetching_faucet} />
             <span>{"Faucet"}</span>
         </button>
+    </div>}
+}
+
+pub fn view_edit(&self) -> Html {
+    html!{<div class="page" color=self.state.color>
+        <div class="edit-coin-inputs">
+            <input class="edit-coin-input edit-name"
+                placeholder="Name"
+                value=&self.state.edit_name
+                oninput=self.link.callback(|e: InputData| Msg::UpdateName(e.value))
+            />
+            <input class="edit-coin-input edit-symbol"
+                placeholder="Symbol"
+                value=&self.state.edit_symbol
+                oninput=self.link.callback(|e: InputData| Msg::UpdateSymbol(e.value))
+            />
+            <button class="button save-button"
+                disabled=self.state.registering || self.state.edit_name.len()==0 || self.state.edit_symbol.len()==0
+                onclick=self.link.callback(|_| Msg::EditCoin)
+            >
+                <span>{"SAVE"}</span>
+            </button>
+            <div class="page-edit"
+                visibility=if self.state.name!=EMPTY_NAME {"hidden"} else {""}>
+                <Edit active=self.state.editing 
+                    onclick=self.link.callback(|_| Msg::PencilClicked)
+                />
+            </div>
+        </div>
     </div>}
 }
 
@@ -283,36 +387,6 @@ pub fn fetch_json(&mut self, path:&'static str, body: Value) {
         },
         Err(e) => { Msg::FetchErr(anyhow::Error::new(e), path.to_string()); }
     };
-}
-pub fn parse_json_response(&mut self, path:&'static str, r:String){
-    match path {
-        "faucet"=>{
-            // let json: Result<FaucetRes,Error> = from_str(r.as_str());
-            // info!("faucet successful: {:?}", json);
-        }
-        "send"=>{
-            // let json: Result<SendRes,Error> = from_str(r.as_str());
-            // info!("send successful: {:?}", json);
-        }
-        "clipboard"=>{
-            let json: Result<ClipboardRes,Error> = from_str(r.as_str());
-            json.map(|data| {
-                if data.meta == "addy" && data.cmd=="paste" {
-                    if valid::address(&data.text) {
-                        self.state.addy = data.text;
-                    }
-                }
-            }).ok();
-        }
-        &_=>()
-    }
-}
-pub fn handle_error(&mut self, path:String) {
-    match path.as_str() {
-        "faucet"=> self.state.fetching_faucet = false,
-        "send"=> self.state.sending = false,
-        &_=>()
-    }
 }
 
 }

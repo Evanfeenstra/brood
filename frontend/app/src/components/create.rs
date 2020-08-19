@@ -27,7 +27,6 @@ struct State {
 
 #[derive(Properties, Clone)]
 pub struct Props {
-    pub reload: Callback<()>,
     pub created: Callback<(Coin,u64)>,
     pub iota_balance: u64,
 }
@@ -135,7 +134,7 @@ pub fn view_button(&self) -> Html {
             <Plus loading=self.state.creating active=false
                 onclick=self.link.callback(|_| Msg::Nope)
             />
-            {"CREATE"}
+            <span>{"CREATE"}</span>
         </button>
     </div>}
 }
@@ -206,6 +205,9 @@ pub fn parse_json_response(&mut self, path:&'static str, r:String){
                 self.props.created.emit((data.coin, amt));
             }).ok();
             self.state.creating = false;
+            self.state.name = "".to_string();
+            self.state.symbol = "".to_string();
+            self.state.amount = "".to_string();
         }
         &_=>()
     }
