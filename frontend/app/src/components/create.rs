@@ -23,6 +23,7 @@ struct State {
     symbol: String,
     amount: String,
     creating: bool,
+    iota_balance: u64,
 }
 
 #[derive(Properties, Clone)]
@@ -51,6 +52,7 @@ impl Component for Create {
             symbol: "".to_string(),
             amount: "".to_string(),
             creating: false,
+            iota_balance: 0,
         };
         Create {
             link,
@@ -73,7 +75,7 @@ impl Component for Create {
                 }
             }
             Msg::UpdateAmount(val) => {
-                if valid::amount_input(&val, self.props.iota_balance) {
+                if valid::amount_input(&val, self.state.iota_balance) {
                     self.state.amount = val;
                 }
             }
@@ -109,7 +111,8 @@ impl Component for Create {
     }
 
     fn change(&mut self, _: Self::Properties) -> ShouldRender {
-        false
+        self.state.iota_balance = self.props.iota_balance;
+        true
     }
 
     fn view(&self) -> Html {
@@ -129,6 +132,7 @@ impl Create {
 pub fn view_button(&self) -> Html {
     html!{<div class="create-button-wrap">
         <button class="create-button button"
+            active={self.state.creating}
             onclick=self.link.callback(|_| Msg::CreateClicked)
             disabled=self.state.name.len()==0 || self.state.symbol.len()==0 || self.state.amount.len()==0>
             <Plus loading=self.state.creating active=false

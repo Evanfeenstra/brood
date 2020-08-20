@@ -1,15 +1,9 @@
 $primary: #f5f5f5;
 $headheight: 56px;
-$bodyheight: calc(100% - 80px);
+$bodyheight: calc(100% - 57px);
 $sidewidth: 280px;
 $mainwidth: calc(100vw - 280px);
 
-body{
-  max-width:888px;
-  min-width:888px;
-  max-height:646px;
-  min-height:646px;
-}
 *{
   box-sizing: border-box;
   user-select: none;
@@ -276,6 +270,17 @@ section.main{
 .button[disabled]{
   border:1px solid grey;
   color:grey;
+  cursor: default;
+}
+.button:hover * {
+  cursor: pointer;
+}
+.button[active="true"] {
+  border:2px solid white;
+  background: rgba(255,255,255,0.4);
+  cursor: default;
+}
+.button[active="true"] * {
   cursor: default;
 }
 

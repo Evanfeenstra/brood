@@ -293,6 +293,7 @@ pub fn view_send(&self) -> Html {
             oninput=self.link.callback(|e: InputData| Msg::UpdateAmount(e.value))
         />
         <button class="button send-button"
+            active={self.state.sending}
             disabled=self.state.addy.len()!=44 || self.state.amount.len()==0
             onclick=self.link.callback(|_| Msg::EnterAddy)
         >
@@ -308,6 +309,7 @@ pub fn view_faucet(&self) -> Html {
     }
     html!{<div class="faucet-wrap">
         <button class="button faucet-button"
+            active={self.state.fetching_faucet}
             onclick=self.link.callback(|_| Msg::FaucetClicked)>
             <Faucet active={self.state.fetching_faucet} />
             <span>{"Faucet"}</span>

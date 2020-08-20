@@ -7,7 +7,6 @@ use crate::app::{App, Msg, Coin};
 const IOTA_COLOR: &str = "IOTA";
 
 /*
-buttons active no pointer
 init setup. show 0 iota if no wallet?
 */
 
@@ -27,7 +26,8 @@ pub fn view_app(&self) -> Html {
 
 pub fn view_coins(&self) -> Html {
     html! {
-        <div class="coins">
+        <div class="coins"
+            visibility=if self.state.initted {""} else {"hidden"}>
             {for self.state.coins.iter().enumerate().map(|e| self.view_coin(e)) }
         </div>
     }
@@ -135,6 +135,8 @@ pub fn view_settings(&self) -> Html {
                 <button class="button settings-url-button"
                     visibility=if !self.state.changing_url {"hidden"} else {""}
                     // disabled=self.state.url_input_value.len()==0
+                    disabled={self.state.checking}
+                    active={self.state.checking}
                     onclick=self.link.callback(|_| Msg::EnterChangedURL)
                 >
                     {view_url_button_content()}

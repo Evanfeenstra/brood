@@ -10,8 +10,10 @@ use yew::services::{
 };
 use std::collections::HashMap;
 use crate::utils::valid;
+use crate::map;
 
 const KEY: &str = "brood.shimmer_url";
+const IOTA_COLOR: &str = "IOTA";
 
 pub struct App {
     pub link: ComponentLink<Self>,
@@ -94,9 +96,17 @@ impl Component for App {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let storage = StorageService::new(Area::Local).unwrap();
+        let empty_iota = vec![Coin{
+            name:IOTA_COLOR.to_string(),
+            color:IOTA_COLOR.to_string(),
+            symbol:"I".to_string(),
+        }];
         let state = State {
             initted: false,
-            coins: Vec::new(),
+            coins: empty_iota,
+            confirmed_balance: map!{IOTA_COLOR.to_string()=>0},
+            pending_balance: HashMap::new(),
+            addresses: Vec::new(),
             url_input_value: "".to_string(),
             checking: false,
             synced: false,
@@ -107,9 +117,6 @@ impl Component for App {
             receive_active: false,
             has_wallet: false,
             copied: false,
-            confirmed_balance: HashMap::new(),
-            pending_balance: HashMap::new(),
-            addresses: Vec::new(),
             selected_color: "".to_string(),
             creating: false,
             changing_url: true,

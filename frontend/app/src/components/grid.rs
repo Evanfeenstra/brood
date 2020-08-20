@@ -1,5 +1,5 @@
 use yew::{html, Properties, Component, ComponentLink, Callback, Html, ShouldRender};
-use yew::services::{Task,RenderService};
+use yew::services::{Task,RenderService,ResizeService,resize};
 // use log::*;
 
 use crate::components::{line::Line};
@@ -10,12 +10,14 @@ pub struct Grid {
     props: Props,
     speed: i16,
     render_loop: Option<Box<dyn Task>>,
+    resize_task: Option<resize::ResizeTask>,
     points: Vec<(i16,i16)>,
 }
 
 pub enum Msg {
     Init(f64),
     Render(f64),
+    Resize(resize::WindowDimensions),
     Nope,
 }
 
@@ -47,6 +49,7 @@ impl Component for Grid {
             state,
             props,
             render_loop: None,
+            resize_task: None,
             speed: 120,
             points: Vec::new(),
         }
@@ -59,6 +62,11 @@ impl Component for Grid {
             }
             Msg::Init(_) => {
                 self.init();
+            }
+            Msg::Resize(val) => {
+                let w = val.width as i16;
+                let h = val.height as i16;
+                self.set_size(w,h);
             }
             Msg::Nope => {}
         }
@@ -74,6 +82,10 @@ impl Component for Grid {
             let render_frame = self.link.callback(Msg::Init);
             let handle = RenderService::request_animation_frame(render_frame);
             self.render_loop = Some(Box::new(handle)); // store or its dropped
+
+            let resize = self.link.callback(Msg::Resize);
+            let resize_handle = ResizeService::new().register(resize);
+            self.resize_task = Some(resize_handle);
         }
     }
 
@@ -151,9 +163,27 @@ impl Component for Grid {
 }
 
 impl Grid {
+    fn set_size(&mut self, w:i16, h:i16) {
+        self.state.width = w;
+        self.state.height = h;
+        self.points = self.make_points(w-2, h-2);
+        self.state.total = self.calc_total(self.points.clone());
+    }
+    fn make_points(&mut self, w:i16, h:i16) -> Vec<(i16,i16)> {
+        vec![
+            (280,h),
+            (280,56),
+            (2,56),
+            (2,h),
+            (w,h),
+            (w,2),
+            (2,2),
+            (2,56),
+        ]
+    }
     fn render_gl(&mut self) {
         self.state.l = self.state.l + self.speed;
-        if self.state.l > self.state.total + 48 {
+        if self.state.l > self.state.total * 2 {
             self.props.done.emit(());
             return // stop the loop
         }
@@ -164,34 +194,25 @@ impl Grid {
     }
     fn init(&mut self) {
         let window = web_sys::window().unwrap();
-        self.state.width = match window.inner_width().unwrap().as_f64() {
+        let w = match window.inner_width().unwrap().as_f64() {
             Some(jwidth) => jwidth as i16,
             _ => 0,
         };
-        self.state.height = match window.inner_height().unwrap().as_f64() {
+        let h = match window.inner_height().unwrap().as_f64() {
             Some(jheight) => jheight as i16,
             _ => 0,
         };
-        let h = self.state.height - 2;
-        let w = self.state.width - 2;
-        self.points = vec![
-            (280,h),
-            (280,56),
-            (2,56),
-            (2,h),
-            (w,h),
-            (w,2),
-            (2,2),
-            (2,56),
-        ];
-        self.state.total = self.points.iter().enumerate().fold(0, |sum, (i,p):(usize, &(i16,i16))| {
+        self.set_size(w, h);
+        self.render_gl();
+    }
+    fn calc_total(&mut self, points:Vec<(i16,i16)>) -> i16 {
+        points.iter().enumerate().fold(0, |sum, (i,p):(usize, &(i16,i16))| {
             let mut next = p; // so no len
             if i<self.points.len()-1 {
                 next = &self.points[i+1];
             }
             return sum + self.calc_length(p.0,p.1,next.0,next.1);
-        });
-        self.render_gl();
+        })
     }
     fn calc_length(&self, x1:i16, y1:i16, x2:i16, y2:i16) ->i16 {
         let xlen = x1 - x2;
