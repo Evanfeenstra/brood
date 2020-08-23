@@ -9,19 +9,42 @@ env:
 
 # Builds
 builds:
-  # Brood mac and linux
-  - id: brood
+  # Brood linux
+  - id: brood-linux
+    env:
+      - CGO_ENABLED=1
     binary: brood
     ldflags:
       - -s -w
     goos:
       - linux
+    ignore:
+      - goos: linux
+        goarch: 386
+    goarch:
+      - amd64
+
+  # Brood mac
+  - id: brood-mac
+    env:
+      - CGO_ENABLED=1
+      - CC=/home/runner/work/osxcross/target/bin/o64-clang
+      - CXX=/home/runner/work/osxcross/target/bin/o64-clang++
+    binary: brood
+    ldflags:
+      - -s -w
+    goos:
       - darwin
+    ignore:
+      - goos: darwin
+        goarch: 386
     goarch:
       - amd64
 
   # Brood windows
   - id: brood-windows
+    env:
+      - CGO_ENABLED=1
     binary: brood-windows
     ldflags:
       - -s -w -H windowsgui
