@@ -1,4 +1,4 @@
-package main
+package wallet
 
 import (
 	"fmt"
@@ -12,7 +12,8 @@ import (
 	"github.com/Evanfeenstra/brood/frontend"
 )
 
-func server(port string, IS_DEV bool) *http.Server {
+// Server initialization
+func Server(port string, IS_DEV bool) *http.Server {
 	r := initChi(IS_DEV)
 
 	if !IS_DEV {

@@ -1,4 +1,4 @@
-package main
+package wallet
 
 type Check struct {
 	URL string `json:"url"`

@@ -67,7 +67,7 @@ pub fn view_coin(&self, (_idx, coin): (usize, &Coin)) -> Html {
 
 pub fn view_sidebar(&self) -> Html {
     let view_plus = || {
-        if self.state.synced {
+        if self.state.synced && self.state.has_wallet {
             return html!{<Plus active=self.state.creating loading=false
                 onclick=self.link.callback(|_| Msg::CreateClicked)
             />}

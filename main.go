@@ -7,11 +7,8 @@ import (
 	"time"
 
 	"github.com/webview/webview"
-)
 
-var (
-	IS_DEV bool
-	IS_WEB bool
+	"github.com/Evanfeenstra/brood/wallet"
 )
 
 func main() {
@@ -20,7 +17,7 @@ func main() {
 
 	IS_DEV := os.Getenv("DEV") == "true" // export DEV=true
 	IS_WEB := os.Getenv("WEB") == "true" // export DEV=true
-	srv := server(port, IS_DEV)
+	srv := wallet.Server(port, IS_DEV)
 
 	defer func() {
 		// cleanup http server
