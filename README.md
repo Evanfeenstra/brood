@@ -2,7 +2,7 @@
 
 IOTA Shimmer testnet wallet desktop application. Build with [Yew](https://github.com/yewstack/yew) and [Webview](https://github.com/webview/webview).
 
-![](https://raw.githubusercontent.com/Evanfeenstra/brood/raw/master/wallet/screenshot.jpg)
+![](https://github.com/Evanfeenstra/brood/blob/master/wallet/screenshot.jpg?raw=true)
 
 ### features
 - Send and receive IOTA shimmer testnet tokens
