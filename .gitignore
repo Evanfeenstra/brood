@@ -7,3 +7,7 @@ config.json
 yarn.lock
 package-lock.json
 dist
+nohup.out
+brood.app
+notes.md
+brood.exe

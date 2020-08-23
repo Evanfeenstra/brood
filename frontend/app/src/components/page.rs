@@ -23,6 +23,7 @@ pub struct Page {
 }
 
 struct State {
+    synced: bool,
     addy: String,
     amount: String,
     fetching_faucet: bool,
@@ -41,6 +42,7 @@ struct State {
 
 #[derive(Properties, Clone)]
 pub struct Props {
+    pub synced: bool,
     pub coin: Coin,
     pub balance: u64,
     pub pending: u64,
@@ -69,6 +71,7 @@ impl Component for Page {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let initial_props = props.clone();
         let state = State{
+            synced: initial_props.synced,
             name: initial_props.coin.name,
             color: initial_props.coin.color,
             symbol: initial_props.coin.symbol,
@@ -221,6 +224,7 @@ impl Component for Page {
         self.state.symbol = props.coin.symbol;
         self.state.balance = props.balance;
         self.state.pending = props.pending;
+        self.state.synced = props.synced;
         true
     }
 
@@ -309,6 +313,7 @@ pub fn view_faucet(&self) -> Html {
     }
     html!{<div class="faucet-wrap">
         <button class="button faucet-button"
+            disabled={!self.state.synced}
             active={self.state.fetching_faucet}
             onclick=self.link.callback(|_| Msg::FaucetClicked)>
             <Faucet active={self.state.fetching_faucet} />

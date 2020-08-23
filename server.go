@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,15 +12,10 @@ import (
 	"github.com/Evanfeenstra/brood/frontend"
 )
 
-func srv(port string, isDev bool) *http.Server {
-	r := initChi(isDev)
+func server(port string, IS_DEV bool) *http.Server {
+	r := initChi(IS_DEV)
 
-	if !isDev {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			// serve packr2 box here
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode("INDEX")
-		})
+	if !IS_DEV {
 		r.Group(func(r chi.Router) {
 			r.Get("/", frontend.IndexRoute)
 			r.Get("/static/*", frontend.StaticRoute)
@@ -41,23 +35,23 @@ func srv(port string, isDev bool) *http.Server {
 		r.Post("/clipboard", doClipboard)
 	})
 
-	server := &http.Server{Addr: ":" + port, Handler: r}
+	srv := &http.Server{Addr: ":" + port, Handler: r}
 	go func() {
 		fmt.Println("Listening on port " + port)
-		if err := server.ListenAndServe(); err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			fmt.Println("Server startup error:", err.Error())
 		}
 	}()
-	return server
+	return srv
 }
 
-func initChi(isDev bool) *chi.Mux {
+func initChi(IS_DEV bool) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(120 * time.Second))
-	if isDev { // dev comes from port 8000
+	if IS_DEV { // dev comes from port 8000
+		r.Use(middleware.Logger)
 		cors := cors.New(cors.Options{
 			AllowedOrigins:   []string{"http://localhost:8000"},
 			AllowedMethods:   []string{"POST", "OPTIONS"},

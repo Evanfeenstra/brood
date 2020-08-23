@@ -3,6 +3,7 @@ use serde_json::{
     value::Value,
     error::Error,
     from_str,
+    json,
 };
 use yew::format::Json;
 use yew::services::{
@@ -57,6 +58,7 @@ impl App {
                         Err(e)=> Msg::FetchErr(e),
                     }
                 } else {
+                    // log::info!("{:?}",meta.status);
                     Msg::FetchErr(anyhow!("cant fetch"))
                 }
             },
@@ -102,6 +104,9 @@ impl App {
                 json.map(|data| {
                     if data.meta == "url_input_value" && data.cmd=="paste" {
                         self.state.url_input_value = data.text;
+                    }
+                    if data.meta=="seed" && data.cmd=="copy" {
+                        self.fetch_json("state", json!({}));
                     }
                 }).ok();
             }

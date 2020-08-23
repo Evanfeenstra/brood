@@ -14,6 +14,14 @@ import (
 	"github.com/shibukawa/configdir"
 )
 
+const (
+	vendorName = "brood"
+	appName    = "wallet"
+	walletPath = "state.dat"
+)
+
+// cd "/Users/evanfeenstra/Library/Application Support/brood/wallet"
+
 func reloadWalletFromFile(url string, folder *configdir.Config) (*wallet.Wallet, error) {
 
 	data, _ := folder.ReadFile(walletPath)

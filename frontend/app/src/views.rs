@@ -6,10 +6,6 @@ use crate::app::{App, Msg, Coin};
 
 const IOTA_COLOR: &str = "IOTA";
 
-/*
-init setup. show 0 iota if no wallet?
-*/
-
 impl App {
 
 pub fn view_app(&self) -> Html {
@@ -101,7 +97,7 @@ pub fn view_content(&self) -> Html {
             <Loading size="" />
         </section>}
     }
-    if self.state.shimmer_url.len()==0 {
+    if self.state.shimmer_url.len()==0 && self.state.selected_color.len()==0 {
         return self.view_url_input()
     }
     html! {
@@ -169,6 +165,9 @@ pub fn view_settings(&self) -> Html {
 }
 
 pub fn view_info(&self) -> Html {
+    if !self.state.has_wallet {
+        return html!{};
+    }
     let mut synced_text = "NOT SYNCED";
     if self.state.synced {
         synced_text = "SYNCED";
@@ -246,6 +245,7 @@ pub fn view_body(&self) -> Html {
         // info!("{:?}",coin);
         return match coin {
             Some(c)=> html!{<Page
+                synced={self.state.synced}
                 coin={c}
                 balance={balance}
                 pending={pending}

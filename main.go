@@ -9,33 +9,44 @@ import (
 	"github.com/webview/webview"
 )
 
+var (
+	IS_DEV bool
+	IS_WEB bool
+)
+
 func main() {
 
 	port := "3579"
 
-	isDev := os.Getenv("DEV") == "true" // export DEV=true
-	server := srv(port, isDev)
-
-	debug := true
-	w := webview.New(debug)
+	IS_DEV := os.Getenv("DEV") == "true" // export DEV=true
+	IS_WEB := os.Getenv("WEB") == "true" // export DEV=true
+	srv := server(port, IS_DEV)
 
 	defer func() {
-		// cleanup webview
-		w.Destroy()
 		// cleanup http server
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		if err := server.Shutdown(ctx); err != nil {
+		if err := srv.Shutdown(ctx); err != nil {
 			fmt.Printf("error shutting down server: %s", err.Error())
 		}
 	}()
+
+	debug := true
+	w := webview.New(debug)
+	defer w.Destroy()
 
 	w.SetTitle("Brood Wallet")
 	w.SetSize(888, 646, webview.HintNone)
 
 	appPort := port
-	if isDev {
+	if IS_DEV {
 		appPort = "8000"
+	}
+	if IS_WEB {
+		prt := os.Getenv("PORT")
+		if prt != "" {
+			appPort = prt
+		}
 	}
 	w.Navigate("http://localhost:" + appPort)
 	w.Run()

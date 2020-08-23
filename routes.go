@@ -20,12 +20,6 @@ import (
 
 var shimmerURL string
 
-const (
-	vendorName = "evanfeenstra"
-	appName    = "brood"
-	walletPath = "wallet.dat"
-)
-
 func checkWallet(w http.ResponseWriter, r *http.Request) {
 
 	check := Check{}
@@ -54,7 +48,7 @@ func checkWallet(w http.ResponseWriter, r *http.Request) {
 	if folder != nil { // has file
 		hasWallet = true
 	}
-	fmt.Println(folder)
+	// fmt.Println(folder)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(InfoRes{
@@ -357,7 +351,7 @@ func registerCoin(w http.ResponseWriter, r *http.Request) {
 		Name:   coin.Name,
 		Symbol: coin.Symbol,
 	})
-	fmt.Println("registered!")
+	// fmt.Println("registered!")
 
 	writeWalletState(walletState)
 

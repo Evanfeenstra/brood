@@ -8,3 +8,5 @@ npm run build
 cd ../
 packr2 clean
 packr2
+cd ../
+go build

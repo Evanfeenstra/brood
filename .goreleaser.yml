@@ -1,0 +1,43 @@
+# Documentation at http://goreleaser.com
+
+# Project name
+project_name: brood
+
+# Environment variables
+env:
+  - GO111MODULE=on
+
+# Builds
+builds:
+  # Brood mac and linux
+  - id: brood
+    binary: brood
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+
+  # Brood windows
+  - id: brood-windows
+    binary: brood-windows
+    ldflags:
+      - -s -w -H windowsgui
+    goos:
+      - windows
+    goarch:
+      - amd64
+
+# Changelog
+changelog:
+  skip: true
+
+# Release
+release:
+  prerelease: auto
+  name_template: "{{.ProjectName}}-{{.Version}}"
+  github:
+    owner: Evanfeenstra
+    name: brood

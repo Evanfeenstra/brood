@@ -10,6 +10,9 @@ $mainwidth: calc(100vw - 280px);
   -webkit-user-select: none;
   cursor:default;
 }
+pre{
+  cursor: text;
+}
 input {
   user-select: text;
   -webkit-user-select: text;
@@ -275,6 +278,12 @@ section.main{
 .button:hover * {
   cursor: pointer;
 }
+.button[disabled] * {
+  cursor: default;
+}
+.button[disabled] svg {
+  fill: grey;
+}
 .button[active="true"] {
   border:2px solid white;
   background: rgba(255,255,255,0.4);
@@ -419,6 +428,7 @@ section.main{
   justify-content: space-between;
   background: rgba(255,255,255,0.1);
   cursor: pointer;
+  position: relative;
 }
 .coin:first-child{
   border-top: 1px solid white;
@@ -451,14 +461,12 @@ section.main{
   align-items: center;
   font-size:13px;
   margin-right:20px;
-  position: relative;
+  position: absolute;
+  top:16px;right:0;
   height:14px;
 }
 .coin-balance{
   font-size:13px;
-  position: absolute;
-  right:0;
-  top:0;
   pointer-events: none;
 }
 .coin-balance-pending{

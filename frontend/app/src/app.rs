@@ -230,7 +230,6 @@ impl Component for App {
                 }));
                 self.state.seed = "".to_string();
                 self.state.has_wallet = true;
-                self.fetch_json("state", json!({}));  
             }
             Msg::AddressCopied(addy)=> {
                 self.fetch_json("clipboard", json!({
@@ -246,7 +245,7 @@ impl Component for App {
                 self.state.copied = false;
             }
             Msg::Interval=> {
-                if !self.state.synced {
+                if !self.state.synced || !self.state.has_wallet {
                     return false;
                 }
                 if self.state.interval_level<3 {
