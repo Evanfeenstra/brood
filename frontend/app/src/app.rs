@@ -109,8 +109,11 @@ impl Component for App {
                 "".to_string()
             }
         };
-        if host::is_shimmer_node() {
-            shimmer_url = "http://0.0.0.0:8080".to_string();
+        if host::is_shimmer_node() { // docker network
+            shimmer_url = "goshimmer:8080".to_string();
+        }
+        if host::is_shimmer_node_no_docker() {
+            shimmer_url = "http://localhost:8080".to_string();
         }
         // is_shimmer_node
         let state = State {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/Evanfeenstra/brood/wallet"
@@ -11,6 +12,10 @@ import (
 func main() {
 
 	port := "3888"
+	prt := os.Getenv("PORT")
+	if prt != "" {
+		port = prt
+	}
 
 	srv := wallet.Server(port, false)
 
