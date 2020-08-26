@@ -1,6 +1,8 @@
 # build stage
 FROM golang as builder
 
+RUN update-ca-certificates
+
 ENV GO111MODULE=on
 
 WORKDIR /app

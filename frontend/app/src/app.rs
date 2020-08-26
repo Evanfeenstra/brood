@@ -110,7 +110,7 @@ impl Component for App {
             }
         };
         if host::is_shimmer_node() { // docker network
-            shimmer_url = "goshimmer:8080".to_string();
+            shimmer_url = "http://goshimmer:8080".to_string();
         }
         if host::is_shimmer_node_no_docker() {
             shimmer_url = "http://localhost:8080".to_string();
