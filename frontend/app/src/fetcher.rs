@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use crate::app::{App, Msg, Address, Coin};
 
-static URL: &'static str = "http://localhost:3579/";
+static URL: &'static str = "http://localhost:3888/";
 
 /// have to correspond the data layout from that endpoint.
 #[derive(Deserialize, Debug)]

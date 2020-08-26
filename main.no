@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	port := "8089"
+	port := "3888"
 
 	srv := wallet.Server(port, false)
 

@@ -354,7 +354,7 @@ pub fn view_edit(&self) -> Html {
 }
 
 // fetcher stuff
-static URL: &'static str = "http://localhost:3579/";
+static URL: &'static str = "http://localhost:3888/";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FaucetRes {
