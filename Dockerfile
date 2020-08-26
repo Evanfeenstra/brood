@@ -12,6 +12,8 @@ RUN go mod download
 
 COPY . .
 
+RUN sudo apt-get install libwebkit2gtk-4.0-dev libgtk-3-dev
+
 RUN go build
 
 # final stage
