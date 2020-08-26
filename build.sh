@@ -6,8 +6,3 @@ packr2 build frontend/app.go
 echo "building binary..."
 go build
 echo "done!"
-
-# build mac app:
-# mkdir -p brood.app/Contents/MacOS
-# go build -o brood.app/Contents/MacOS/brood
-# echo "done!"

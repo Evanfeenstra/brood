@@ -16,7 +16,7 @@ func main() {
 	port := "3579"
 
 	IS_DEV := os.Getenv("DEV") == "true" // export DEV=true
-	IS_WEB := os.Getenv("WEB") == "true" // export DEV=true
+	IS_WEB := os.Getenv("WEB") == "true"
 	srv := wallet.Server(port, IS_DEV)
 
 	defer func() {
