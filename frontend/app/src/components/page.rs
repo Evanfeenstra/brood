@@ -10,6 +10,7 @@ use anyhow::{anyhow};
 use crate::app::{Coin};
 use crate::components::icons::{faucet::Faucet, send::Send, edit::Edit};
 use crate::utils::valid;
+use crate::utils::host;
 
 const IOTA_COLOR: &str = "IOTA";
 const EMPTY_NAME: &str = "••••••";
@@ -353,9 +354,6 @@ pub fn view_edit(&self) -> Html {
 
 }
 
-// fetcher stuff
-static URL: &'static str = "http://localhost:3888/";
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FaucetRes {
     success: bool,
@@ -387,7 +385,8 @@ pub fn fetch_json(&mut self, path:&'static str, body: Value) {
             }
         },
     );
-    match Request::post(URL.to_string()+&path).body(Json(&body)) {
+    let url = host::url();
+    match Request::post(url+&path).body(Json(&body)) {
         Ok(req) => {
             let res = FetchService::fetch(req, callback);
             self.fetcher = Some(res.unwrap());

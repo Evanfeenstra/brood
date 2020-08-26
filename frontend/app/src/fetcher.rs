@@ -12,10 +12,9 @@ use yew::services::{
 use yew::format::{Text};
 use anyhow::{anyhow};
 use std::collections::HashMap;
+use crate::utils::host;
 
 use crate::app::{App, Msg, Address, Coin};
-
-static URL: &'static str = "http://localhost:3888/";
 
 /// have to correspond the data layout from that endpoint.
 #[derive(Deserialize, Debug)]
@@ -63,7 +62,8 @@ impl App {
                 }
             },
         );
-        match Request::post(URL.to_string()+&path).body(Json(&body)) {
+        let url = host::url();
+        match Request::post(url+&path).body(Json(&body)) {
             Ok(req) => {
                 let res = FetchService::fetch(req, callback);
                 self.fetcher = Some(res.unwrap());

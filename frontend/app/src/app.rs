@@ -10,6 +10,7 @@ use yew::services::{
 };
 use std::collections::HashMap;
 use crate::utils::valid;
+use crate::utils::host;
 use crate::map;
 
 const KEY: &str = "brood.shimmer_url";
@@ -101,6 +102,17 @@ impl Component for App {
             color:IOTA_COLOR.to_string(),
             symbol:"I".to_string(),
         }];
+        let mut shimmer_url = {
+            if let Json(Ok(persisted)) = storage.restore(KEY) {
+                persisted
+            } else {
+                "".to_string()
+            }
+        };
+        if host::is_shimmer_node() {
+            shimmer_url = "http://0.0.0.0:8080".to_string();
+        }
+        // is_shimmer_node
         let state = State {
             initted: false,
             coins: empty_iota,
@@ -123,13 +135,7 @@ impl Component for App {
             interval_counter: 0,
             interval_level: 3,
             meta_key_down: false,
-            shimmer_url: {
-                if let Json(Ok(persisted)) = storage.restore(KEY) {
-                    persisted
-                } else {
-                    "".to_string()
-                }
-            }
+            shimmer_url,
         };
         let mut app = App {
             link: link.clone(),
