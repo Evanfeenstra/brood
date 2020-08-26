@@ -12,8 +12,9 @@ RUN go mod download
 
 COPY . .
 
-RUN apt-get update && \
-    apt-get install libwebkit2gtk-4.0-dev libgtk-3-dev
+RUN mv main.no tmp.no \
+    && mv main.go main.no \
+    && mv tmp.no main.go
 
 RUN go build
 
