@@ -74,7 +74,7 @@ pub enum Msg {
     EnterURL,
     EnterChangedURL,
     FetchDone(&'static str, String),
-    FetchErr(anyhow::Error),
+    FetchErr(&'static str, anyhow::Error),
     SettingsClicked,
     ReceiveClicked,
     Create,
@@ -222,9 +222,12 @@ impl Component for App {
                     self.fetch_json("state", json!({}));
                 }
             }
-            Msg::FetchErr(err)=> {
+            Msg::FetchErr(path, err)=> {
                 log::warn!("{:?}",err);
-                self.state.checking = false
+                self.state.checking = false;
+                if path=="check" {
+                    self.state.shimmer_url = "".to_string();
+                }
             }
             Msg::Create=> {
                 self.fetch_json("create", json!({

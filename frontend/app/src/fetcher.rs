@@ -54,11 +54,11 @@ impl App {
                 if meta.status.is_success() {
                     match data {
                         Ok(d)=> Msg::FetchDone(path, d),
-                        Err(e)=> Msg::FetchErr(e),
+                        Err(e)=> Msg::FetchErr(path, e),
                     }
                 } else {
                     // log::info!("{:?}",meta.status);
-                    Msg::FetchErr(anyhow!("cant fetch"))
+                    Msg::FetchErr(path, anyhow!("cant fetch"))
                 }
             },
         );
@@ -68,7 +68,7 @@ impl App {
                 let res = FetchService::fetch(req, callback);
                 self.fetcher = Some(res.unwrap());
             },
-            Err(e) => { Msg::FetchErr(anyhow::Error::new(e)); }
+            Err(e) => { Msg::FetchErr(path, anyhow::Error::new(e)); }
         };
     }
     pub fn parse_json_response(&mut self, path:&'static str, r:String){

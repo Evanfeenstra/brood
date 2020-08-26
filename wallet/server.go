@@ -40,7 +40,7 @@ func Server(port string, IS_DEV bool) *http.Server {
 	go func() {
 		fmt.Println("Listening on port " + port)
 		if err := srv.ListenAndServe(); err != nil {
-			fmt.Println("Server startup error:", err.Error())
+			fmt.Println("Server:", err.Error())
 		}
 	}()
 	return srv
