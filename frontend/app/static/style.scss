@@ -11,6 +11,8 @@ $mainwidth: calc(100vw - 280px);
   cursor:default;
 }
 pre{
+  user-select: text;
+  -webkit-user-select: text;
   cursor: text;
 }
 input {
