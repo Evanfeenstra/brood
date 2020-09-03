@@ -148,9 +148,9 @@ pub fn view_settings(&self) -> Html {
                         })
                         onkeyup=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("up".to_string(),e.key(),"url_input_value".to_string()))
                         onkeydown=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("down".to_string(),e.key(),"url_input_value".to_string()))
-                        oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
-                        oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
-                        onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                        // oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                        // oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                        // onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
                     />
                     <span visibility=if self.state.changing_url {"hidden"} else {""}>
                         {&self.state.shimmer_url}
@@ -279,9 +279,9 @@ pub fn view_url_input(&self) -> Html {
                     })
                     onkeyup=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("up".to_string(),e.key(),"url_input_value".to_string()))
                     onkeydown=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("down".to_string(),e.key(),"url_input_value".to_string()))
-                    oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
-                    oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
-                    onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                    // oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                    // oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+                    // onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
                 />
                 <button class="button url-input-button"
                     disabled=self.state.url_input_value.len()==0

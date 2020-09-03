@@ -31,7 +31,7 @@ IOTA Shimmer testnet wallet desktop application. Build with [Yew](https://github
 - `./build.sh`
 
 ### deploy
-You can also run Brood as a web service from your goshimmer node, with docker-compose:
+You can also run Brood as a web service from your goshimmer node, by adding this to your docker-compose:
 ```yml
 brood:
     image: evanfeenstra/brood:latest
@@ -47,7 +47,13 @@ brood:
 ```
 Then visit your IP at port 3888
 
-### deploy without docker
+### or plain docker
+Run on "shimmer" docker network
+```bash
+docker run -d --net=shimmer --name=brood -p 0.0.0.0:3888:3888/tcp -v /root/.config/brood:/root/.config/brood:rw docker.io/evanfeenstra/brood:latest
+```
+
+### or with go
 ```bash
 # this removes the Webview dependency
 mv main.no tmp.no && mv main.no main.go

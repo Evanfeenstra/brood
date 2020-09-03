@@ -287,9 +287,9 @@ pub fn view_send(&self) -> Html {
             oninput=self.link.callback(|e: InputData| Msg::UpdateAddy(e.value))
             onkeyup=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("up".to_string(),e.key(),"addy".to_string()))
             onkeydown=self.link.callback(|e: KeyboardEvent| Msg::InputKeyEvent("down".to_string(),e.key(),"addy".to_string()))
-            oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
-            oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
-            onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+            // oncopy=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+            // oncut=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
+            // onpaste=self.link.callback(|e: Event| {e.prevent_default(); Msg::Nope})
         />
         <input class="amount-input"
             type="number"

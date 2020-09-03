@@ -20,8 +20,6 @@ const (
 	walletPath = "state.dat"
 )
 
-// cd "/Users/evanfeenstra/Library/Application Support/brood/wallet"
-
 func reloadWalletFromFile(url string, folder *configdir.Config) (*wallet.Wallet, error) {
 
 	data, _ := folder.ReadFile(walletPath)
@@ -78,7 +76,6 @@ func writeWalletState(walletState *wallet.Wallet) error {
 	if len(folders) == 0 {
 		return errors.New("no file")
 	}
-	// fmt.Println("WRITE TO", folders[0])
 	err := folders[0].WriteFile(walletPath, walletState.ExportState())
 	return err
 }
