@@ -63,3 +63,8 @@ go build
 PORT=3887 ./brood
 ```
 
+### support me!
+Want to see more features in Brood Wallet? Send some IOTA my way...
+```
+XIELBIKVLGUOKXMQOJ9NEVYCBUKUVNHZPAXJQEMGBXTYV9RL9H9YIFCWUNUIO9XQTBSABZZZGUYQNWPJYHRTSXEOZW
+```
