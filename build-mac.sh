@@ -12,5 +12,5 @@ cp frontend/img/Info.plist brood.app/Contents/Info.plist
 mkdir -p brood.app/Contents/Resources
 cp frontend/img/logo.icns brood.app/Contents/Resources/logo.icns
 echo "zipping..."
-hdiutil create -format UDZO -srcfolder brood.app brood.dmg
+hdiutil create -format UDZO -srcfolder brood.app brood-mac.dmg
 echo "done!"
