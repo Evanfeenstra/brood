@@ -4,6 +4,8 @@ IOTA Shimmer testnet wallet desktop application. Build with [Yew](https://github
 
 ![](https://github.com/Evanfeenstra/brood/blob/master/frontend/img/screenshot.jpg?raw=true)
 
+**[Download Desktop App Here](https://github.com/Evanfeenstra/brood/releases)**
+
 ### features
 - Send and receive IOTA shimmer testnet tokens
 - Create new tokens on Shimmer
